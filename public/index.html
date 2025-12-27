@@ -471,5 +471,199 @@
     loadStats();
     loadDomains();
   </script>
+
+  <!-- SDLC Section -->
+  <script>
+    // Add SDLC section to the page
+    function addSDLCSection() {
+      const container = document.querySelector('.container');
+
+      // Create SDLC card
+      const sdlcCard = createElement('div', 'card');
+      const title = createElement('h2', null, '🏗️ SDLC Project Management');
+      sdlcCard.appendChild(title);
+
+      // Create project form
+      const form = createElement('form');
+      form.id = 'sdlcForm';
+      form.addEventListener('submit', createSDLCProject);
+
+      const nameGroup = createElement('div', 'input-group');
+      const nameLabel = createElement('label', null, 'Project Name');
+      nameLabel.setAttribute('for', 'projectName');
+      const nameInput = createElement('input');
+      nameInput.type = 'text';
+      nameInput.id = 'projectName';
+      nameInput.placeholder = 'E-Commerce Checkout Feature';
+      nameInput.required = true;
+      nameGroup.appendChild(nameLabel);
+      nameGroup.appendChild(nameInput);
+
+      const descGroup = createElement('div', 'input-group');
+      const descLabel = createElement('label', null, 'Description');
+      descLabel.setAttribute('for', 'projectDescription');
+      const descInput = createElement('textarea');
+      descInput.id = 'projectDescription';
+      descInput.placeholder = 'One-click checkout with Stripe integration';
+      descInput.rows = 3;
+      descInput.required = true;
+      descGroup.appendChild(descLabel);
+      descGroup.appendChild(descInput);
+
+      const submitBtn = createElement('button', 'btn btn-primary', 'Create SDLC Project');
+      submitBtn.type = 'submit';
+
+      form.appendChild(nameGroup);
+      form.appendChild(descGroup);
+      form.appendChild(submitBtn);
+      sdlcCard.appendChild(form);
+
+      // Create results area
+      const resultsDiv = createElement('div');
+      resultsDiv.id = 'sdlcResults';
+      sdlcCard.appendChild(resultsDiv);
+
+      container.appendChild(sdlcCard);
+    }
+
+    // Create SDLC project
+    async function createSDLCProject(e) {
+      e.preventDefault();
+
+      const name = document.getElementById('projectName').value;
+      const description = document.getElementById('projectDescription').value;
+
+      try {
+        const response = await fetch('/api/sdlc/projects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, description })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          displaySDLCProject(data.data);
+
+          // Clear form
+          document.getElementById('projectName').value = '';
+          document.getElementById('projectDescription').value = '';
+        } else {
+          alert('Error: ' + data.error);
+        }
+      } catch (error) {
+        alert('Failed to create project: ' + error.message);
+      }
+    }
+
+    // Display SDLC project
+    function displaySDLCProject(project) {
+      const resultsDiv = document.getElementById('sdlcResults');
+      resultsDiv.textContent = ''; // Clear previous results
+
+      // Project header
+      const header = createElement('div');
+      header.style.marginTop = '2rem';
+      header.style.padding = '1rem';
+      header.style.background = '#f9fafb';
+      header.style.borderRadius = '8px';
+      header.style.marginBottom = '1rem';
+
+      const projName = createElement('h3', null, project.name);
+      projName.style.marginBottom = '0.5rem';
+      const projDesc = createElement('p', null, project.description);
+      projDesc.style.color = '#6b7280';
+      const projId = createElement('p', null, `ID: ${project.id}`);
+      projId.style.fontSize = '0.875rem';
+      projId.style.color = '#9ca3af';
+
+      header.appendChild(projName);
+      header.appendChild(projDesc);
+      header.appendChild(projId);
+      resultsDiv.appendChild(header);
+
+      // Phase indicator
+      const phaseDiv = createElement('div');
+      phaseDiv.style.marginBottom = '1.5rem';
+
+      const phaseLabel = createElement('strong', null, 'Current Phase: ');
+      const phaseValue = createElement('span', null, project.currentPhase.toUpperCase());
+      phaseValue.style.color = '#667eea';
+      phaseValue.style.fontWeight = 'bold';
+
+      phaseDiv.appendChild(phaseLabel);
+      phaseDiv.appendChild(phaseValue);
+      resultsDiv.appendChild(phaseDiv);
+
+      // Deliverables section
+      const delivTitle = createElement('h4', null, 'Deliverables');
+      delivTitle.style.marginBottom = '0.75rem';
+      resultsDiv.appendChild(delivTitle);
+
+      const delivTable = createElement('div');
+      delivTable.style.marginBottom = '1.5rem';
+
+      project.deliverables.forEach(deliv => {
+        const delivRow = createElement('div');
+        delivRow.style.padding = '0.5rem';
+        delivRow.style.borderBottom = '1px solid #e5e7eb';
+        delivRow.style.display = 'flex';
+        delivRow.style.justifyContent = 'space-between';
+        delivRow.style.alignItems = 'center';
+
+        const delivName = createElement('span', null, deliv.name);
+        const delivStatus = createElement('span', null, deliv.status);
+        delivStatus.style.padding = '0.25rem 0.5rem';
+        delivStatus.style.borderRadius = '4px';
+        delivStatus.style.fontSize = '0.875rem';
+        delivStatus.style.background = deliv.status === 'completed' ? '#d1fae5' : '#fef3c7';
+        delivStatus.style.color = deliv.status === 'completed' ? '#065f46' : '#92400e';
+
+        delivRow.appendChild(delivName);
+        delivRow.appendChild(delivStatus);
+        delivTable.appendChild(delivRow);
+      });
+
+      resultsDiv.appendChild(delivTable);
+
+      // Quality gates section
+      const gatesTitle = createElement('h4', null, 'Quality Gates');
+      gatesTitle.style.marginBottom = '0.75rem';
+      resultsDiv.appendChild(gatesTitle);
+
+      const gatesTable = createElement('div');
+
+      project.qualityGates.forEach(gate => {
+        const gateRow = createElement('div');
+        gateRow.style.padding = '0.5rem';
+        gateRow.style.borderBottom = '1px solid #e5e7eb';
+        gateRow.style.display = 'flex';
+        gateRow.style.justifyContent = 'space-between';
+        gateRow.style.alignItems = 'center';
+
+        const gateInfo = createElement('div');
+        const gateName = createElement('div', null, gate.name);
+        gateName.style.fontWeight = '500';
+        const gateDesc = createElement('div', null, gate.description);
+        gateDesc.style.fontSize = '0.875rem';
+        gateDesc.style.color = '#6b7280';
+
+        gateInfo.appendChild(gateName);
+        gateInfo.appendChild(gateDesc);
+
+        const gateStatus = createElement('span', null, gate.status === 'passed' ? '✅' : '⏳');
+        gateStatus.style.fontSize = '1.25rem';
+
+        gateRow.appendChild(gateInfo);
+        gateRow.appendChild(gateStatus);
+        gatesTable.appendChild(gateRow);
+      });
+
+      resultsDiv.appendChild(gatesTable);
+    }
+
+    // Initialize SDLC section
+    addSDLCSection();
+  </script>
 </body>
 </html>
