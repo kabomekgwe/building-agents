@@ -1,0 +1,36 @@
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+.cache/
+temp/
+
+# Node modules (if any)
+node_modules/
+npm-debug.log*
+
+# Python (if any)
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+.env
+
+# Build outputs (if any)
+dist/
+build/
+*.egg-info/
