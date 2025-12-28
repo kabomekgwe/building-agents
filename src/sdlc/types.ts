@@ -55,6 +55,7 @@ export interface Deliverable {
   name: string;
   description: string;
   required: boolean;
+  type: 'document' | 'code' | 'test' | 'design' | 'report';
   status: DeliverableStatus;
   artifacts: Artifact[];
   assignedAgent?: string;
@@ -574,6 +575,33 @@ export interface QualityGateTemplate {
   description: string;
   type: 'automated' | 'manual';
   blocksTransition: boolean;
+}
+
+// ========================================
+// PLANNING SESSION TYPES
+// ========================================
+
+export interface PlanningSession {
+  id: string
+  projectName: string
+  description?: string
+  currentPhase: 'requirements' | 'design' | 'implementation'
+  completedPhases: string[]
+  phaseData: {
+    requirements?: any
+    design?: any
+    implementation?: any
+  }
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface PlanningPhaseDefinition {
+  id: string
+  name: string
+  description: string
+  order: number
+  requiredFields: string[]
 }
 
 /**
