@@ -457,26 +457,44 @@
     </div>
 
     <!-- Autonomous Task Execution Section -->
-    <div class="card"
-      style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); border: none;">
-      <h2 style="color: white;">🚀 Get Shit Done</h2>
-      <p style="color: white; opacity: 0.85; margin-bottom: 2rem; font-weight: 300;">Describe any goal and the AI will
-        autonomously break it down and execute it until completion.</p>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+      <div class="card"
+        style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); border: none;">
+        <h2 style="color: white;">🚀 Rapid Task</h2>
+        <p style="color: white; opacity: 0.85; margin-bottom: 2rem; font-weight: 300;">Break down and execute a single
+          task autonomously.</p>
 
-      <form id="autonomousForm">
-        <div class="input-group">
-          <label for="goalInput" style="color: white;">What's your objective?</label>
-          <textarea id="goalInput"
-            placeholder="Example: Build a complete user authentication system with email verification..." rows="3"
-            required
-            style="background: rgba(0, 0, 0, 0.2); border-color: rgba(255, 255, 255, 0.2); color: white;"></textarea>
-        </div>
-        <button type="submit" class="btn" style="background: white; color: var(--primary); font-weight: 700;">
-          Launch Mission 🚀
-        </button>
-      </form>
+        <form id="autonomousForm">
+          <div class="input-group">
+            <label for="goalInput" style="color: white;">Task Goal</label>
+            <textarea id="goalInput" placeholder="Example: Build a React button component..." rows="3" required
+              style="background: rgba(0, 0, 0, 0.2); border-color: rgba(255, 255, 255, 0.2); color: white;"></textarea>
+          </div>
+          <button type="submit" class="btn" style="background: white; color: var(--primary); font-weight: 700;">
+            Launch Task ⚡
+          </button>
+        </form>
+        <div id="autonomousStatus" style="margin-top: 2rem;"></div>
+      </div>
 
-      <div id="autonomousStatus" style="margin-top: 2rem;"></div>
+      <div class="card" style="background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%); border: none;">
+        <h2 style="color: white;">🏗️ SDLC Mission</h2>
+        <p style="color: white; opacity: 0.85; margin-bottom: 2rem; font-weight: 300;">Full lifecycle development: PRD
+          -> Design -> Prod-ready Code.</p>
+
+        <form id="missionForm">
+          <div class="input-group">
+            <label for="missionGoal" style="color: white;">Project Objective</label>
+            <textarea id="missionGoal"
+              placeholder="Example: Design and implement a secure authentication microservice..." rows="3" required
+              style="background: rgba(0, 0, 0, 0.2); border-color: rgba(255, 255, 255, 0.2); color: white;"></textarea>
+          </div>
+          <button type="submit" class="btn" style="background: white; color: #4f46e5; font-weight: 700;">
+            Launch Mission 🎯
+          </button>
+        </form>
+        <div id="missionStatus" style="margin-top: 2rem;"></div>
+      </div>
     </div>
 
     <div class="card">
@@ -959,8 +977,8 @@
     }
 
     // Display task progress
-    function displayTaskProgress(task) {
-      const statusDiv = document.getElementById('autonomousStatus');
+    function displayTaskProgress(task, containerId = 'autonomousStatus') {
+      const statusDiv = document.getElementById(containerId);
       statusDiv.textContent = ''; // Clear previous content
 
       // Task header
@@ -1119,6 +1137,102 @@
         outputDiv.appendChild(outputText);
         statusDiv.appendChild(outputDiv);
       }
+    }
+
+    // Handle Autonomous form submission
+    document.getElementById('autonomousForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const goal = document.getElementById('goalInput').value;
+      const statusDiv = document.getElementById('autonomousStatus');
+
+      statusDiv.textContent = '';
+      const loading = createElement('div');
+      loading.textContent = '🧠 Planning task decomposition...';
+      loading.style.padding = '1rem';
+      loading.style.background = 'rgba(255,255,255,0.2)';
+      loading.style.borderRadius = '8px';
+      loading.style.color = 'white';
+      statusDiv.appendChild(loading);
+
+      try {
+        const response = await fetch('/api/autonomous/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ goal })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          startTaskPolling(data.data.id, 'autonomousStatus');
+          document.getElementById('goalInput').value = '';
+        } else {
+          statusDiv.textContent = '❌ Error: ' + data.error;
+        }
+      } catch (error) {
+        statusDiv.textContent = '❌ Failed to start task: ' + error.message;
+      }
+    });
+
+    // Handle SDLC Mission form submission
+    document.getElementById('missionForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const goal = document.getElementById('missionGoal').value;
+      const statusDiv = document.getElementById('missionStatus');
+
+      statusDiv.textContent = '';
+      const loading = createElement('div');
+      loading.textContent = '🔄 Initializing full SDLC lifecycle...';
+      loading.style.padding = '1rem';
+      loading.style.background = 'rgba(255,255,255,0.2)';
+      loading.style.borderRadius = '8px';
+      loading.style.color = 'white';
+      statusDiv.appendChild(loading);
+
+      try {
+        const response = await fetch('/api/sdlc/mission', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ goal })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Mission uses the same polling mechanism as autonomous tasks
+          startTaskPolling(data.data.id, 'missionStatus');
+          document.getElementById('missionGoal').value = '';
+        } else {
+          statusDiv.textContent = '❌ Error: ' + data.error;
+        }
+      } catch (error) {
+        statusDiv.textContent = '❌ Failed to launch mission: ' + error.message;
+      }
+    });
+
+    // Update startTaskPolling to accept a status container ID
+    function startTaskPolling(taskId, containerId = 'autonomousStatus') {
+      if (pollInterval) clearInterval(pollInterval);
+
+      pollInterval = setInterval(async () => {
+        try {
+          const response = await fetch(`/api/autonomous/tasks/${taskId}`);
+          const data = await response.json();
+
+          if (data.success) {
+            displayTaskProgress(data.data, containerId);
+
+            if (data.data.status === 'completed' || data.data.status === 'failed') {
+              clearInterval(pollInterval);
+              pollInterval = null;
+            }
+          }
+        } catch (error) {
+          console.error('Polling error:', error);
+        }
+      }, 2000);
     }
   </script>
 </body>

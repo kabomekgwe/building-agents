@@ -715,6 +715,121 @@ app.get('/planning', (c) => {
       min-height: 120px;
     }
 
+    .input-group textarea.code-textarea {
+      font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .input-group select {
+      width: 100%;
+      padding: 1rem 1.25rem;
+      background: hsla(240, 20%, 5%, 0.5);
+      border: 2px solid var(--card-border);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 1rem;
+      transition: var(--transition);
+      cursor: pointer;
+    }
+
+    .input-group select:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: hsla(240, 20%, 5%, 0.8);
+      box-shadow: 0 0 0 4px hsla(250, 84%, 67%, 0.15);
+    }
+
+    .component-item {
+      background: hsla(0, 0%, 100%, 0.03);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .component-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .component-item-title {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .component-item-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .decision-item {
+      background: hsla(0, 0%, 100%, 0.03);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .decision-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .decision-item-title {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .decision-item-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .review-section {
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .review-section:last-child {
+      border-bottom: none;
+    }
+
+    .review-section h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    .review-section p {
+      margin-bottom: 0.5rem;
+      color: var(--text-muted);
+    }
+
+    .review-section strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .review-list {
+      margin: 0.5rem 0;
+      padding-left: 1.5rem;
+    }
+
+    .review-list li {
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+
     .btn {
       background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
       color: white;
@@ -1075,6 +1190,25 @@ app.get('/planning', (c) => {
       successMetrics: [''],
       outOfScope: []
     };
+    let designFormData = {
+      systemArchitecture: '',
+      architectureDescription: '',
+      components: [{ name: '', responsibility: '', dependencies: '' }],
+      databaseSchema: '',
+      apiContracts: '',
+      technologyStack: {
+        languages: [''],
+        frameworks: [''],
+        databases: [''],
+        infrastructure: []
+      },
+      architecturalDecisions: [{
+        title: '',
+        contextDescription: '',
+        decisionMade: '',
+        rationale: ''
+      }]
+    };
 
     function createElement(tag, className, textContent) {
       const el = document.createElement(tag);
@@ -1129,9 +1263,53 @@ app.get('/planning', (c) => {
         title: 'Phase 2: Design Documentation',
         description: 'Create technical specifications and Architecture Decision Records (ADRs).',
         icon: '🎨',
-        fields: [
-          { name: 'architecture', label: 'System Architecture', type: 'textarea', placeholder: 'Describe the system architecture...', required: true },
-          { name: 'techStack', label: 'Technology Stack', type: 'text', placeholder: 'React, Node.js, PostgreSQL...', required: true }
+        multiStep: true,
+        steps: [
+          {
+            stepNumber: 1,
+            stepTitle: 'System Overview',
+            fields: [
+              { name: 'systemArchitecture', label: 'System Architecture Pattern', type: 'select', options: ['Monolith', 'Microservices', 'Serverless', 'Hybrid', 'Other'], required: true },
+              { name: 'architectureDescription', label: 'High-Level Architecture Description', type: 'textarea', placeholder: 'Describe the overall system design and key architectural patterns', required: true, minLength: 200, maxLength: 2000 }
+            ]
+          },
+          {
+            stepNumber: 2,
+            stepTitle: 'Component Breakdown',
+            fields: [
+              { name: 'components', label: 'Components/Modules', type: 'component-list', placeholder: 'Define system components', required: true, minItems: 1, maxItems: 50 }
+            ]
+          },
+          {
+            stepNumber: 3,
+            stepTitle: 'Data & APIs',
+            fields: [
+              { name: 'databaseSchema', label: 'Database Schema', type: 'code', placeholder: 'Describe your database schema, tables, and relationships', required: true, minLength: 300, maxLength: 5000 },
+              { name: 'apiContracts', label: 'API Contracts', type: 'code', placeholder: 'Define key API endpoints, request/response formats', required: true, minLength: 200, maxLength: 5000 }
+            ]
+          },
+          {
+            stepNumber: 4,
+            stepTitle: 'Technology Stack',
+            fields: [
+              { name: 'languages', label: 'Languages', type: 'tech-list', placeholder: 'e.g., TypeScript, Python', required: true, minItems: 1, maxItems: 10 },
+              { name: 'frameworks', label: 'Frameworks', type: 'tech-list', placeholder: 'e.g., React, Node.js', required: true, minItems: 1, maxItems: 10 },
+              { name: 'databases', label: 'Databases', type: 'database-list', options: ['PostgreSQL', 'MySQL', 'MongoDB', 'SQLite', 'Redis', 'Other'], required: true, minItems: 1, maxItems: 5 },
+              { name: 'infrastructure', label: 'Infrastructure', type: 'tech-list', placeholder: 'e.g., AWS, Docker', required: false, minItems: 0, maxItems: 10 }
+            ]
+          },
+          {
+            stepNumber: 5,
+            stepTitle: 'Architectural Decisions',
+            fields: [
+              { name: 'architecturalDecisions', label: 'Key Architectural Decisions (for ADRs)', type: 'decision-list', placeholder: 'Define architectural decisions', required: true, minItems: 1, maxItems: 10 }
+            ]
+          },
+          {
+            stepNumber: 6,
+            stepTitle: 'Review',
+            fields: []
+          }
         ]
       },
       implementation: {
@@ -1148,6 +1326,8 @@ app.get('/planning', (c) => {
 
     let autosaveTimer = null;
     let formDirty = false;
+    let autosaveTimerDesign = null;
+    let designFormDirty = false;
 
     async function initSession() {
       try {
@@ -1157,6 +1337,9 @@ app.get('/planning', (c) => {
         if (data.success && data.data) {
           currentSession = data.data;
           loadSavedRequirements();
+          if (currentSession.currentPhase === 'design') {
+            await loadSavedDesign();
+          }
           updateUI();
         } else {
           await createSession();
@@ -1265,6 +1448,55 @@ app.get('/planning', (c) => {
       setTimeout(() => {
         ind.style.opacity = '0';
       }, 2000);
+    }
+
+    function markDesignFormDirty() {
+      designFormDirty = true;
+      if (!autosaveTimerDesign) {
+        autosaveTimerDesign = setTimeout(autosaveDesign, 30000);
+      }
+    }
+
+    async function autosaveDesign() {
+      if (!designFormDirty) return;
+
+      const validComponents = designFormData.components.filter(c =>
+        c.name.trim().length > 0 || c.responsibility.trim().length > 0
+      );
+
+      const hasMinimumData = designFormData.systemArchitecture.length > 0 &&
+                             designFormData.architectureDescription.length >= 200;
+
+      if (!hasMinimumData) {
+        designFormDirty = false;
+        autosaveTimerDesign = null;
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/planning/design/autosave', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(designFormData)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          designFormDirty = false;
+          showAutosaveIndicator('Saved');
+        }
+      } catch (error) {
+        console.error('Design autosave failed:', error);
+      }
+
+      autosaveTimerDesign = null;
+    }
+
+    async function loadSavedDesign() {
+      const state = await fetch('/api/planning/state').then(r => r.json());
+      if (state.success && state.data.phaseData?.design) {
+        designFormData = state.data.phaseData.design;
+      }
     }
 
     function updateUI() {
@@ -1390,15 +1622,30 @@ app.get('/planning', (c) => {
     }
 
     function renderField(field, container) {
+      const currentPhase = currentSession?.currentPhase || 'requirements';
+
       if (field.type === 'list') {
         renderListField(field, container);
+      } else if (field.type === 'select') {
+        renderSelectField(field, container, currentPhase);
+      } else if (field.type === 'code') {
+        renderCodeField(field, container, currentPhase);
+      } else if (field.type === 'component-list') {
+        renderComponentListField(field, container);
+      } else if (field.type === 'tech-list') {
+        renderTechListField(field, container);
+      } else if (field.type === 'database-list') {
+        renderDatabaseListField(field, container);
+      } else if (field.type === 'decision-list') {
+        renderDecisionListField(field, container);
       } else {
-        renderTextFieldWithValidation(field, container);
+        renderTextFieldWithValidation(field, container, currentPhase);
       }
     }
 
-    function renderTextFieldWithValidation(field, container) {
+    function renderTextFieldWithValidation(field, container, currentPhase = 'requirements') {
       const inputGroup = createElement('div', 'input-group');
+      const formData = currentPhase === 'design' ? designFormData : requirementsFormData;
 
       const label = createElement('label');
       label.setAttribute('for', field.name);
@@ -1416,18 +1663,22 @@ app.get('/planning', (c) => {
       input.id = field.name;
       input.name = field.name;
       input.placeholder = field.placeholder;
-      input.value = requirementsFormData[field.name] || '';
+      input.value = formData[field.name] || '';
       if (field.required) input.required = true;
 
       input.addEventListener('input', (e) => {
-        requirementsFormData[field.name] = e.target.value;
+        formData[field.name] = e.target.value;
         updateCharCount(field, input);
         validateCurrentStep();
-        markFormDirty();
+        if (currentPhase === 'design') {
+          markDesignFormDirty();
+        } else {
+          markFormDirty();
+        }
       });
 
       input.addEventListener('blur', () => {
-        validateField(field, input);
+        validateField(field, input, formData);
       });
 
       inputGroup.appendChild(label);
@@ -1517,6 +1768,477 @@ app.get('/planning', (c) => {
       });
     }
 
+    function renderSelectField(field, container, currentPhase) {
+      const inputGroup = createElement('div', 'input-group');
+      const formData = currentPhase === 'design' ? designFormData : requirementsFormData;
+
+      const label = createElement('label');
+      label.setAttribute('for', field.name);
+      label.textContent = field.label + (field.required ? ' *' : '');
+
+      const select = createElement('select');
+      select.id = field.name;
+      select.name = field.name;
+      if (field.required) select.required = true;
+
+      const placeholderOption = createElement('option');
+      placeholderOption.value = '';
+      placeholderOption.textContent = 'Select an option...';
+      placeholderOption.disabled = true;
+      placeholderOption.selected = !formData[field.name];
+      select.appendChild(placeholderOption);
+
+      field.options.forEach(optionText => {
+        const option = createElement('option');
+        option.value = optionText;
+        option.textContent = optionText;
+        if (formData[field.name] === optionText) {
+          option.selected = true;
+        }
+        select.appendChild(option);
+      });
+
+      select.addEventListener('change', (e) => {
+        formData[field.name] = e.target.value;
+        validateCurrentStep();
+        markDesignFormDirty();
+      });
+
+      inputGroup.appendChild(label);
+      inputGroup.appendChild(select);
+
+      const errorMsg = createElement('div', 'field-error');
+      errorMsg.id = field.name + '-error';
+      inputGroup.appendChild(errorMsg);
+
+      container.appendChild(inputGroup);
+    }
+
+    function renderCodeField(field, container, currentPhase) {
+      const inputGroup = createElement('div', 'input-group');
+      const formData = currentPhase === 'design' ? designFormData : requirementsFormData;
+
+      const label = createElement('label');
+      label.setAttribute('for', field.name);
+      label.textContent = field.label + (field.required ? ' *' : '');
+
+      const textarea = createElement('textarea', 'code-textarea');
+      textarea.id = field.name;
+      textarea.name = field.name;
+      textarea.placeholder = field.placeholder;
+      textarea.rows = 6;
+      textarea.value = formData[field.name] || '';
+      if (field.required) textarea.required = true;
+
+      textarea.addEventListener('input', (e) => {
+        formData[field.name] = e.target.value;
+        updateCharCount(field, textarea);
+        validateCurrentStep();
+        markDesignFormDirty();
+      });
+
+      textarea.addEventListener('blur', () => {
+        validateField(field, textarea, formData);
+      });
+
+      inputGroup.appendChild(label);
+      inputGroup.appendChild(textarea);
+
+      if (field.minLength || field.maxLength) {
+        const charCount = createElement('div', 'char-count');
+        charCount.id = field.name + '-count';
+        inputGroup.appendChild(charCount);
+        updateCharCount(field, textarea);
+      }
+
+      const errorMsg = createElement('div', 'field-error');
+      errorMsg.id = field.name + '-error';
+      inputGroup.appendChild(errorMsg);
+
+      container.appendChild(inputGroup);
+    }
+
+    function renderComponentListField(field, container) {
+      const listField = createElement('div', 'list-field');
+
+      const label = createElement('label');
+      label.textContent = field.label + (field.required ? ' *' : '');
+      listField.appendChild(label);
+
+      const listItems = createElement('div');
+      listItems.id = field.name + '-list';
+      listField.appendChild(listItems);
+
+      const addBtn = createElement('button', 'btn btn-secondary');
+      addBtn.type = 'button';
+      addBtn.textContent = '+ Add Component';
+      addBtn.style.marginTop = '1rem';
+      addBtn.addEventListener('click', () => {
+        designFormData.components.push({ name: '', responsibility: '', dependencies: '' });
+        renderComponentItems();
+        validateCurrentStep();
+      });
+      listField.appendChild(addBtn);
+
+      const errorMsg = createElement('div', 'field-error');
+      errorMsg.id = field.name + '-error';
+      listField.appendChild(errorMsg);
+
+      container.appendChild(listField);
+
+      renderComponentItems();
+    }
+
+    function renderComponentItems() {
+      const listItems = document.getElementById('components-list');
+      if (!listItems) return;
+
+      listItems.textContent = '';
+
+      designFormData.components.forEach((component, index) => {
+        const componentItem = createElement('div', 'component-item');
+
+        const header = createElement('div', 'component-item-header');
+        const title = createElement('div', 'component-item-title');
+        title.textContent = 'Component ' + (index + 1);
+        header.appendChild(title);
+
+        if (designFormData.components.length > 1) {
+          const removeBtn = createElement('button', 'list-item-btn remove');
+          removeBtn.type = 'button';
+          removeBtn.textContent = 'Remove';
+          removeBtn.addEventListener('click', () => {
+            designFormData.components.splice(index, 1);
+            renderComponentItems();
+            validateCurrentStep();
+          });
+          header.appendChild(removeBtn);
+        }
+
+        componentItem.appendChild(header);
+
+        const fields = createElement('div', 'component-item-fields');
+
+        const nameInput = createElement('input');
+        nameInput.type = 'text';
+        nameInput.placeholder = 'Component name *';
+        nameInput.value = component.name || '';
+        nameInput.addEventListener('input', (e) => {
+          designFormData.components[index].name = e.target.value;
+          validateCurrentStep();
+          markDesignFormDirty();
+        });
+        fields.appendChild(nameInput);
+
+        const responsibilityInput = createElement('input');
+        responsibilityInput.type = 'text';
+        responsibilityInput.placeholder = 'What does this component do? *';
+        responsibilityInput.value = component.responsibility || '';
+        responsibilityInput.addEventListener('input', (e) => {
+          designFormData.components[index].responsibility = e.target.value;
+          validateCurrentStep();
+          markDesignFormDirty();
+        });
+        fields.appendChild(responsibilityInput);
+
+        const dependenciesInput = createElement('input');
+        dependenciesInput.type = 'text';
+        dependenciesInput.placeholder = 'Dependencies (comma-separated, optional)';
+        dependenciesInput.value = component.dependencies || '';
+        dependenciesInput.addEventListener('input', (e) => {
+          designFormData.components[index].dependencies = e.target.value;
+          markDesignFormDirty();
+        });
+        fields.appendChild(dependenciesInput);
+
+        componentItem.appendChild(fields);
+        listItems.appendChild(componentItem);
+      });
+    }
+
+    function renderTechListField(field, container) {
+      const listField = createElement('div', 'list-field');
+
+      const label = createElement('label');
+      label.textContent = field.label + (field.required ? ' *' : '');
+      listField.appendChild(label);
+
+      const listItems = createElement('div', 'list-items');
+      listItems.id = field.name + '-list';
+      listField.appendChild(listItems);
+
+      const errorMsg = createElement('div', 'field-error');
+      errorMsg.id = field.name + '-error';
+      listField.appendChild(errorMsg);
+
+      container.appendChild(listField);
+
+      renderTechItems(field);
+    }
+
+    function renderTechItems(field) {
+      const listItems = document.getElementById(field.name + '-list');
+      if (!listItems) return;
+
+      listItems.textContent = '';
+
+      const items = designFormData.technologyStack[field.name] || [''];
+
+      items.forEach((item, index) => {
+        const listItem = createElement('div', 'list-item');
+
+        const input = createElement('input');
+        input.type = 'text';
+        input.placeholder = field.placeholder;
+        input.value = item;
+        input.addEventListener('input', (e) => {
+          designFormData.technologyStack[field.name][index] = e.target.value;
+          validateCurrentStep();
+          markDesignFormDirty();
+        });
+
+        const addBtn = createElement('button', 'list-item-btn');
+        addBtn.type = 'button';
+        addBtn.textContent = '+';
+        addBtn.addEventListener('click', () => {
+          designFormData.technologyStack[field.name].push('');
+          renderTechItems(field);
+          validateCurrentStep();
+        });
+
+        const removeBtn = createElement('button', 'list-item-btn remove');
+        removeBtn.type = 'button';
+        removeBtn.textContent = '×';
+        removeBtn.disabled = items.length === 1 && field.required;
+        removeBtn.addEventListener('click', () => {
+          designFormData.technologyStack[field.name].splice(index, 1);
+          renderTechItems(field);
+          validateCurrentStep();
+        });
+
+        listItem.appendChild(input);
+        if (index === items.length - 1) {
+          listItem.appendChild(addBtn);
+        }
+        if (items.length > 1 || !field.required) {
+          listItem.appendChild(removeBtn);
+        }
+
+        listItems.appendChild(listItem);
+      });
+    }
+
+    function renderDatabaseListField(field, container) {
+      const listField = createElement('div', 'list-field');
+
+      const label = createElement('label');
+      label.textContent = field.label + (field.required ? ' *' : '');
+      listField.appendChild(label);
+
+      const listItems = createElement('div', 'list-items');
+      listItems.id = field.name + '-list';
+      listField.appendChild(listItems);
+
+      const errorMsg = createElement('div', 'field-error');
+      errorMsg.id = field.name + '-error';
+      listField.appendChild(errorMsg);
+
+      container.appendChild(listField);
+
+      renderDatabaseItems(field);
+    }
+
+    function renderDatabaseItems(field) {
+      const listItems = document.getElementById(field.name + '-list');
+      if (!listItems) return;
+
+      listItems.textContent = '';
+
+      const items = designFormData.technologyStack.databases || [''];
+
+      items.forEach((item, index) => {
+        const listItem = createElement('div', 'list-item');
+
+        const select = createElement('select');
+        select.style.flex = '1';
+
+        const placeholderOption = createElement('option');
+        placeholderOption.value = '';
+        placeholderOption.textContent = 'Select database...';
+        placeholderOption.disabled = true;
+        placeholderOption.selected = !item;
+        select.appendChild(placeholderOption);
+
+        field.options.forEach(optionText => {
+          const option = createElement('option');
+          option.value = optionText;
+          option.textContent = optionText;
+          if (item === optionText) {
+            option.selected = true;
+          }
+          select.appendChild(option);
+        });
+
+        select.addEventListener('change', (e) => {
+          designFormData.technologyStack.databases[index] = e.target.value;
+          validateCurrentStep();
+          markDesignFormDirty();
+        });
+
+        const addBtn = createElement('button', 'list-item-btn');
+        addBtn.type = 'button';
+        addBtn.textContent = '+';
+        addBtn.addEventListener('click', () => {
+          designFormData.technologyStack.databases.push('');
+          renderDatabaseItems(field);
+          validateCurrentStep();
+        });
+
+        const removeBtn = createElement('button', 'list-item-btn remove');
+        removeBtn.type = 'button';
+        removeBtn.textContent = '×';
+        removeBtn.disabled = items.length === 1 && field.required;
+        removeBtn.addEventListener('click', () => {
+          designFormData.technologyStack.databases.splice(index, 1);
+          renderDatabaseItems(field);
+          validateCurrentStep();
+        });
+
+        listItem.appendChild(select);
+        if (index === items.length - 1) {
+          listItem.appendChild(addBtn);
+        }
+        if (items.length > 1 || !field.required) {
+          listItem.appendChild(removeBtn);
+        }
+
+        listItems.appendChild(listItem);
+      });
+    }
+
+    function renderDecisionListField(field, container) {
+      const listField = createElement('div', 'list-field');
+
+      const label = createElement('label');
+      label.textContent = field.label + (field.required ? ' *' : '');
+      listField.appendChild(label);
+
+      const helpText = createElement('p');
+      helpText.style.fontSize = '0.875rem';
+      helpText.style.color = 'var(--text-muted)';
+      helpText.style.marginTop = '0.5rem';
+      helpText.style.marginBottom = '1rem';
+      helpText.textContent = 'Each decision will generate an Architecture Decision Record (ADR)';
+      listField.appendChild(helpText);
+
+      const listItems = createElement('div');
+      listItems.id = field.name + '-list';
+      listField.appendChild(listItems);
+
+      const addBtn = createElement('button', 'btn btn-secondary');
+      addBtn.type = 'button';
+      addBtn.textContent = '+ Add Decision';
+      addBtn.style.marginTop = '1rem';
+      addBtn.addEventListener('click', () => {
+        designFormData.architecturalDecisions.push({
+          title: '',
+          contextDescription: '',
+          decisionMade: '',
+          rationale: ''
+        });
+        renderDecisionItems();
+        validateCurrentStep();
+      });
+      listField.appendChild(addBtn);
+
+      const errorMsg = createElement('div', 'field-error');
+      errorMsg.id = field.name + '-error';
+      listField.appendChild(errorMsg);
+
+      container.appendChild(listField);
+
+      renderDecisionItems();
+    }
+
+    function renderDecisionItems() {
+      const listItems = document.getElementById('architecturalDecisions-list');
+      if (!listItems) return;
+
+      listItems.textContent = '';
+
+      designFormData.architecturalDecisions.forEach((decision, index) => {
+        const decisionItem = createElement('div', 'decision-item');
+
+        const header = createElement('div', 'decision-item-header');
+        const title = createElement('div', 'decision-item-title');
+        title.textContent = 'Decision ' + (index + 1);
+        header.appendChild(title);
+
+        if (designFormData.architecturalDecisions.length > 1) {
+          const removeBtn = createElement('button', 'list-item-btn remove');
+          removeBtn.type = 'button';
+          removeBtn.textContent = 'Remove';
+          removeBtn.addEventListener('click', () => {
+            designFormData.architecturalDecisions.splice(index, 1);
+            renderDecisionItems();
+            validateCurrentStep();
+          });
+          header.appendChild(removeBtn);
+        }
+
+        decisionItem.appendChild(header);
+
+        const fields = createElement('div', 'decision-item-fields');
+
+        const titleInput = createElement('input');
+        titleInput.type = 'text';
+        titleInput.placeholder = 'Decision title (e.g., Use PostgreSQL for primary database) *';
+        titleInput.value = decision.title || '';
+        titleInput.addEventListener('input', (e) => {
+          designFormData.architecturalDecisions[index].title = e.target.value;
+          validateCurrentStep();
+          markDesignFormDirty();
+        });
+        fields.appendChild(titleInput);
+
+        const contextTextarea = createElement('textarea');
+        contextTextarea.placeholder = 'Context: What is the issue you are trying to address? (min 100 chars) *';
+        contextTextarea.rows = 3;
+        contextTextarea.value = decision.contextDescription || '';
+        contextTextarea.addEventListener('input', (e) => {
+          designFormData.architecturalDecisions[index].contextDescription = e.target.value;
+          validateCurrentStep();
+          markDesignFormDirty();
+        });
+        fields.appendChild(contextTextarea);
+
+        const decisionTextarea = createElement('textarea');
+        decisionTextarea.placeholder = 'Decision: What decision did you make? (min 100 chars) *';
+        decisionTextarea.rows = 3;
+        decisionTextarea.value = decision.decisionMade || '';
+        decisionTextarea.addEventListener('input', (e) => {
+          designFormData.architecturalDecisions[index].decisionMade = e.target.value;
+          validateCurrentStep();
+          markDesignFormDirty();
+        });
+        fields.appendChild(decisionTextarea);
+
+        const rationaleTextarea = createElement('textarea');
+        rationaleTextarea.placeholder = 'Rationale: Why did you make this decision? (min 100 chars) *';
+        rationaleTextarea.rows = 3;
+        rationaleTextarea.value = decision.rationale || '';
+        rationaleTextarea.addEventListener('input', (e) => {
+          designFormData.architecturalDecisions[index].rationale = e.target.value;
+          validateCurrentStep();
+          markDesignFormDirty();
+        });
+        fields.appendChild(rationaleTextarea);
+
+        decisionItem.appendChild(fields);
+        listItems.appendChild(decisionItem);
+      });
+    }
+
     function updateCharCount(field, input) {
       const countEl = document.getElementById(field.name + '-count');
       if (countEl) {
@@ -1531,7 +2253,7 @@ app.get('/planning', (c) => {
       }
     }
 
-    function validateField(field, input) {
+    function validateField(field, input, formData) {
       const errorEl = document.getElementById(field.name + '-error');
       const value = input.value.trim();
 
@@ -1558,17 +2280,21 @@ app.get('/planning', (c) => {
     }
 
     function validateCurrentStep() {
-      const phase = phases.requirements;
+      const currentPhase = currentSession?.currentPhase || 'requirements';
+      const phase = phases[currentPhase];
+      if (!phase || !phase.multiStep) return;
+
       const step = phase.steps[currentStep - 1];
       const continueBtn = document.getElementById('stepContinueBtn');
 
-      if (!continueBtn) return;
+      if (!continueBtn || !step) return;
 
+      const formData = currentPhase === 'design' ? designFormData : requirementsFormData;
       let allValid = true;
 
       step.fields.forEach(field => {
         if (field.type === 'list') {
-          const items = requirementsFormData[field.name] || [];
+          const items = formData[field.name] || [];
           const validItems = items.filter(item => item.trim().length > 0);
 
           const errorEl = document.getElementById(field.name + '-error');
@@ -1583,8 +2309,72 @@ app.get('/planning', (c) => {
               errorEl.classList.remove('visible');
             }
           }
+        } else if (field.type === 'component-list') {
+          const errorEl = document.getElementById(field.name + '-error');
+          const validComponents = designFormData.components.filter(c =>
+            c.name.trim().length >= 2 && c.responsibility.trim().length >= 10
+          );
+          if (field.required && validComponents.length < (field.minItems || 1)) {
+            allValid = false;
+            if (errorEl) {
+              errorEl.textContent = 'Please add at least ' + (field.minItems || 1) + ' valid component(s)';
+              errorEl.classList.add('visible');
+            }
+          } else {
+            if (errorEl) {
+              errorEl.classList.remove('visible');
+            }
+          }
+        } else if (field.type === 'tech-list') {
+          const errorEl = document.getElementById(field.name + '-error');
+          const items = designFormData.technologyStack[field.name] || [];
+          const validItems = items.filter(item => item.trim().length > 0);
+          if (field.required && validItems.length < (field.minItems || 1)) {
+            allValid = false;
+            if (errorEl) {
+              errorEl.textContent = 'Please add at least ' + (field.minItems || 1) + ' item(s)';
+              errorEl.classList.add('visible');
+            }
+          } else {
+            if (errorEl) {
+              errorEl.classList.remove('visible');
+            }
+          }
+        } else if (field.type === 'database-list') {
+          const errorEl = document.getElementById(field.name + '-error');
+          const validItems = designFormData.technologyStack.databases.filter(item => item.trim().length > 0);
+          if (field.required && validItems.length < (field.minItems || 1)) {
+            allValid = false;
+            if (errorEl) {
+              errorEl.textContent = 'Please select at least ' + (field.minItems || 1) + ' database(s)';
+              errorEl.classList.add('visible');
+            }
+          } else {
+            if (errorEl) {
+              errorEl.classList.remove('visible');
+            }
+          }
+        } else if (field.type === 'decision-list') {
+          const errorEl = document.getElementById(field.name + '-error');
+          const validDecisions = designFormData.architecturalDecisions.filter(d =>
+            d.title.trim().length >= 5 &&
+            d.contextDescription.trim().length >= 100 &&
+            d.decisionMade.trim().length >= 100 &&
+            d.rationale.trim().length >= 100
+          );
+          if (field.required && validDecisions.length < (field.minItems || 1)) {
+            allValid = false;
+            if (errorEl) {
+              errorEl.textContent = 'Please add at least ' + (field.minItems || 1) + ' complete decision(s)';
+              errorEl.classList.add('visible');
+            }
+          } else {
+            if (errorEl) {
+              errorEl.classList.remove('visible');
+            }
+          }
         } else {
-          const value = requirementsFormData[field.name] || '';
+          const value = formData[field.name] || '';
           if (field.required && value.trim().length < (field.minLength || 1)) {
             allValid = false;
           }
@@ -1595,8 +2385,12 @@ app.get('/planning', (c) => {
     }
 
     function goToPreviousStep() {
+      const currentPhase = currentSession?.currentPhase || 'requirements';
+
       if (currentStep > 1) {
-        if (formDirty) {
+        if (currentPhase === 'design' && designFormDirty) {
+          autosaveDesign();
+        } else if (formDirty) {
           autosave();
         }
 
@@ -1604,24 +2398,29 @@ app.get('/planning', (c) => {
         currentStep--;
         document.getElementById('step-' + currentStep).classList.add('active');
 
+        const phase = phases[currentPhase];
         const progress = document.querySelector('.step-progress');
-        progress.textContent = 'Step ' + currentStep + ' of ' + phases.requirements.steps.length;
+        progress.textContent = 'Step ' + currentStep + ' of ' + phase.steps.length;
 
         const backBtn = document.getElementById('stepBackBtn');
         backBtn.disabled = currentStep === 1;
 
         const continueBtn = document.getElementById('stepContinueBtn');
-        continueBtn.textContent = currentStep === phases.requirements.steps.length ? 'Generate PRD' : 'Continue';
+        const finalStepText = currentPhase === 'requirements' ? 'Generate PRD' : 'Review';
+        continueBtn.textContent = currentStep === phase.steps.length ? finalStepText : 'Continue';
 
         validateCurrentStep();
       }
     }
 
     function goToNextStep() {
-      const phase = phases.requirements;
+      const currentPhase = currentSession?.currentPhase || 'requirements';
+      const phase = phases[currentPhase];
 
       if (currentStep < phase.steps.length) {
-        if (formDirty) {
+        if (currentPhase === 'design' && designFormDirty) {
+          autosaveDesign();
+        } else if (formDirty) {
           autosave();
         }
 
@@ -1636,12 +2435,205 @@ app.get('/planning', (c) => {
         backBtn.disabled = currentStep === 1;
 
         const continueBtn = document.getElementById('stepContinueBtn');
-        continueBtn.textContent = currentStep === phase.steps.length ? 'Generate PRD' : 'Continue';
+        const finalStepText = currentPhase === 'requirements' ? 'Generate PRD' : 'Review';
+        continueBtn.textContent = currentStep === phase.steps.length ? finalStepText : 'Continue';
+
+        if (currentPhase === 'design' && currentStep === 6) {
+          populateDesignReviewSummary();
+        }
 
         validateCurrentStep();
       } else {
-        handleGeneratePRD();
+        if (currentPhase === 'requirements') {
+          handleGeneratePRD();
+        } else if (currentPhase === 'design') {
+          console.log('Design phase complete - ready for Tech Spec generation');
+        }
       }
+    }
+
+    function populateDesignReviewSummary() {
+      const step6Container = document.getElementById('step-6');
+      if (!step6Container) return;
+
+      step6Container.textContent = '';
+
+      const title = createElement('h3', 'step-title');
+      title.textContent = 'Review Your Design';
+      step6Container.appendChild(title);
+
+      const reviewContainer = createElement('div');
+      reviewContainer.style.maxHeight = '500px';
+      reviewContainer.style.overflowY = 'auto';
+      reviewContainer.style.padding = '1rem';
+
+      const overviewSection = createElement('div', 'review-section');
+      const overviewTitle = createElement('h3');
+      overviewTitle.textContent = 'System Overview';
+      overviewSection.appendChild(overviewTitle);
+
+      const archPattern = createElement('p');
+      archPattern.innerHTML = '<strong>Architecture Pattern:</strong> ';
+      archPattern.appendChild(document.createTextNode(designFormData.systemArchitecture));
+      overviewSection.appendChild(archPattern);
+
+      const archDesc = createElement('p');
+      archDesc.innerHTML = '<strong>Description:</strong> ';
+      archDesc.appendChild(document.createTextNode(designFormData.architectureDescription));
+      overviewSection.appendChild(archDesc);
+
+      reviewContainer.appendChild(overviewSection);
+
+      const componentsSection = createElement('div', 'review-section');
+      const componentsTitle = createElement('h3');
+      componentsTitle.textContent = 'Components (' + designFormData.components.length + ')';
+      componentsSection.appendChild(componentsTitle);
+
+      const componentsList = createElement('ul', 'review-list');
+      designFormData.components.forEach(comp => {
+        const li = createElement('li');
+        const strong = createElement('strong');
+        strong.textContent = comp.name + ': ';
+        li.appendChild(strong);
+        li.appendChild(document.createTextNode(comp.responsibility));
+        if (comp.dependencies) {
+          li.appendChild(document.createTextNode(' (Dependencies: ' + comp.dependencies + ')'));
+        }
+        componentsList.appendChild(li);
+      });
+      componentsSection.appendChild(componentsList);
+
+      reviewContainer.appendChild(componentsSection);
+
+      const dataSection = createElement('div', 'review-section');
+      const dataTitle = createElement('h3');
+      dataTitle.textContent = 'Data & APIs';
+      dataSection.appendChild(dataTitle);
+
+      const dbLabel = createElement('p');
+      dbLabel.innerHTML = '<strong>Database Schema:</strong>';
+      dataSection.appendChild(dbLabel);
+
+      const dbCode = createElement('pre');
+      dbCode.style.background = 'rgba(0,0,0,0.3)';
+      dbCode.style.padding = '1rem';
+      dbCode.style.borderRadius = '8px';
+      dbCode.style.overflow = 'auto';
+      dbCode.textContent = designFormData.databaseSchema;
+      dataSection.appendChild(dbCode);
+
+      const apiLabel = createElement('p');
+      apiLabel.innerHTML = '<strong>API Contracts:</strong>';
+      apiLabel.style.marginTop = '1rem';
+      dataSection.appendChild(apiLabel);
+
+      const apiCode = createElement('pre');
+      apiCode.style.background = 'rgba(0,0,0,0.3)';
+      apiCode.style.padding = '1rem';
+      apiCode.style.borderRadius = '8px';
+      apiCode.style.overflow = 'auto';
+      apiCode.textContent = designFormData.apiContracts;
+      dataSection.appendChild(apiCode);
+
+      reviewContainer.appendChild(dataSection);
+
+      const techSection = createElement('div', 'review-section');
+      const techTitle = createElement('h3');
+      techTitle.textContent = 'Technology Stack';
+      techSection.appendChild(techTitle);
+
+      const langLabel = createElement('p');
+      langLabel.innerHTML = '<strong>Languages:</strong> ';
+      langLabel.appendChild(document.createTextNode(designFormData.technologyStack.languages.filter(l => l).join(', ')));
+      techSection.appendChild(langLabel);
+
+      const frameworkLabel = createElement('p');
+      frameworkLabel.innerHTML = '<strong>Frameworks:</strong> ';
+      frameworkLabel.appendChild(document.createTextNode(designFormData.technologyStack.frameworks.filter(f => f).join(', ')));
+      techSection.appendChild(frameworkLabel);
+
+      const dbsLabel = createElement('p');
+      dbsLabel.innerHTML = '<strong>Databases:</strong> ';
+      dbsLabel.appendChild(document.createTextNode(designFormData.technologyStack.databases.filter(d => d).join(', ')));
+      techSection.appendChild(dbsLabel);
+
+      if (designFormData.technologyStack.infrastructure.length > 0) {
+        const infraLabel = createElement('p');
+        infraLabel.innerHTML = '<strong>Infrastructure:</strong> ';
+        infraLabel.appendChild(document.createTextNode(designFormData.technologyStack.infrastructure.filter(i => i).join(', ')));
+        techSection.appendChild(infraLabel);
+      }
+
+      reviewContainer.appendChild(techSection);
+
+      const decisionsSection = createElement('div', 'review-section');
+      const decisionsTitle = createElement('h3');
+      decisionsTitle.textContent = 'Architectural Decisions (' + designFormData.architecturalDecisions.length + ')';
+      decisionsSection.appendChild(decisionsTitle);
+
+      designFormData.architecturalDecisions.forEach((decision, index) => {
+        const decisionDiv = createElement('div');
+        decisionDiv.style.marginBottom = '1rem';
+        decisionDiv.style.paddingBottom = '1rem';
+        decisionDiv.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
+
+        const decisionTitle = createElement('p');
+        const titleStrong = createElement('strong');
+        titleStrong.textContent = (index + 1) + '. ' + decision.title;
+        decisionTitle.appendChild(titleStrong);
+        decisionDiv.appendChild(decisionTitle);
+
+        const context = createElement('p');
+        context.innerHTML = '<strong>Context:</strong> ';
+        context.appendChild(document.createTextNode(decision.contextDescription));
+        context.style.marginLeft = '1rem';
+        decisionDiv.appendChild(context);
+
+        const decisionMade = createElement('p');
+        decisionMade.innerHTML = '<strong>Decision:</strong> ';
+        decisionMade.appendChild(document.createTextNode(decision.decisionMade));
+        decisionMade.style.marginLeft = '1rem';
+        decisionDiv.appendChild(decisionMade);
+
+        const rationale = createElement('p');
+        rationale.innerHTML = '<strong>Rationale:</strong> ';
+        rationale.appendChild(document.createTextNode(decision.rationale));
+        rationale.style.marginLeft = '1rem';
+        decisionDiv.appendChild(rationale);
+
+        decisionsSection.appendChild(decisionDiv);
+      });
+
+      reviewContainer.appendChild(decisionsSection);
+
+      step6Container.appendChild(reviewContainer);
+
+      const buttonContainer = createElement('div');
+      buttonContainer.style.marginTop = '2rem';
+      buttonContainer.style.textAlign = 'center';
+
+      const editBtn = createElement('button', 'btn btn-secondary');
+      editBtn.type = 'button';
+      editBtn.textContent = 'Back to Edit';
+      editBtn.addEventListener('click', () => {
+        document.getElementById('step-6').classList.remove('active');
+        currentStep = 5;
+        document.getElementById('step-5').classList.add('active');
+
+        const progress = document.querySelector('.step-progress');
+        progress.textContent = 'Step 5 of 6';
+
+        const backBtn = document.getElementById('stepBackBtn');
+        backBtn.disabled = false;
+
+        const continueBtn = document.getElementById('stepContinueBtn');
+        continueBtn.textContent = 'Review';
+
+        validateCurrentStep();
+      });
+
+      buttonContainer.appendChild(editBtn);
+      step6Container.appendChild(buttonContainer);
     }
 
     async function handleGeneratePRD() {
@@ -2065,6 +3057,98 @@ app.post('/api/planning/requirements/autosave', async (c) => {
       success: true,
       data: {
         lastSaved: session.phaseData.requirements.lastSaved
+      }
+    })
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return c.json({
+        success: false,
+        error: 'Validation failed',
+        details: error.errors
+      }, 400)
+    }
+
+    return c.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, 500)
+  }
+})
+
+/**
+ * Autosave design form data
+ */
+const ComponentDefinitionSchema = z.object({
+  name: z.string().min(2).max(100),
+  responsibility: z.string().min(10).max(500),
+  dependencies: z.string().max(500).optional()
+})
+
+const TechStackSchema = z.object({
+  languages: z.array(z.string()).min(1).max(10),
+  frameworks: z.array(z.string()).min(1).max(10),
+  databases: z.array(z.string()).min(1).max(5),
+  infrastructure: z.array(z.string()).max(10).default([])
+})
+
+const ArchitecturalDecisionSchema = z.object({
+  title: z.string().min(5).max(150),
+  contextDescription: z.string().min(100).max(1000),
+  decisionMade: z.string().min(100).max(1000),
+  rationale: z.string().min(100).max(1000)
+})
+
+const AutosaveDesignSchema = z.object({
+  systemArchitecture: z.string().min(1),
+  architectureDescription: z.string().min(200).max(2000),
+  components: z.array(ComponentDefinitionSchema).min(1).max(50),
+  databaseSchema: z.string().min(300).max(5000),
+  apiContracts: z.string().min(200).max(5000),
+  technologyStack: TechStackSchema,
+  architecturalDecisions: z.array(ArchitecturalDecisionSchema).min(1).max(10)
+})
+
+app.post('/api/planning/design/autosave', async (c) => {
+  try {
+    const session = Array.from(planningSessions.values())[0]
+
+    if (!session) {
+      return c.json({
+        success: false,
+        error: 'No active planning session'
+      }, 404)
+    }
+
+    const body = await c.req.json()
+    const validated = AutosaveDesignSchema.parse(body)
+
+    if (!session.phaseData.design) {
+      session.phaseData.design = {
+        systemArchitecture: '',
+        architectureDescription: '',
+        components: [],
+        databaseSchema: '',
+        apiContracts: '',
+        technologyStack: {
+          languages: [],
+          frameworks: [],
+          databases: [],
+          infrastructure: []
+        },
+        architecturalDecisions: []
+      }
+    }
+
+    Object.assign(session.phaseData.design, validated)
+    session.phaseData.design.lastSaved = new Date()
+    session.updatedAt = new Date()
+
+    planningSessions.set(session.id, session)
+
+    return c.json({
+      success: true,
+      data: {
+        lastSaved: session.phaseData.design.lastSaved
       }
     })
   } catch (error) {

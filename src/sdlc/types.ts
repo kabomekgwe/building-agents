@@ -594,6 +594,37 @@ export interface RequirementsFormData {
   generatedAt?: Date
 }
 
+export interface ComponentDefinition {
+  name: string
+  responsibility: string
+  dependencies?: string
+}
+
+export interface TechStack {
+  languages: string[]
+  frameworks: string[]
+  databases: string[]
+  infrastructure: string[]
+}
+
+export interface ArchitecturalDecision {
+  title: string
+  contextDescription: string
+  decisionMade: string
+  rationale: string
+}
+
+export interface DesignFormData {
+  systemArchitecture: string
+  architectureDescription: string
+  components: ComponentDefinition[]
+  databaseSchema: string
+  apiContracts: string
+  technologyStack: TechStack
+  architecturalDecisions: ArchitecturalDecision[]
+  lastSaved?: Date
+}
+
 export interface PlanningSession {
   id: string
   projectName: string
@@ -602,7 +633,7 @@ export interface PlanningSession {
   completedPhases: string[]
   phaseData: {
     requirements?: RequirementsFormData
-    design?: any
+    design?: DesignFormData
     implementation?: any
   }
   createdAt: Date

@@ -9,6 +9,8 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { AgentRouter } from '../runtime/router.js';
 import { randomUUID } from 'crypto';
+import { SDLCOrchestrator } from '../sdlc/orchestrator.js';
+import { SDLCPhase, DeliverableStatus } from '../sdlc/types.js';
 
 const execAsync = promisify(exec);
 
@@ -49,9 +51,11 @@ export class AutonomousTaskExecutor {
   private router: AgentRouter;
   private tasks: Map<string, Task> = new Map();
   private progressCallbacks: Map<string, (progress: TaskProgress) => void> = new Map();
+  private orchestrator: SDLCOrchestrator;
 
-  constructor() {
+  constructor(orchestrator?: SDLCOrchestrator) {
     this.router = new AgentRouter();
+    this.orchestrator = orchestrator || new SDLCOrchestrator();
   }
 
   async initialize() {
@@ -228,6 +232,104 @@ Available agent domains: engineering, product, marketing, design, project-manage
     );
 
     return task;
+  }
+
+  /**
+   * Launch a full SDLC Mission
+   * Documentation-first autonomous development
+   */
+  async launchSDLCMission(goal: string): Promise<Task> {
+    const task: Task = {
+      id: randomUUID(),
+      goal,
+      status: 'planning',
+      steps: [],
+      currentStep: 0,
+      createdAt: new Date()
+    };
+
+    this.tasks.set(task.id, task);
+    this.emitProgress(task.id, 'planning', 0, 0, 'Initializing SDLC Mission...');
+
+    try {
+      // 1. Start SDLC Project
+      const project = await this.orchestrator.startProject({
+        name: `Mission: ${goal.substring(0, 30)}...`,
+        description: goal
+      });
+
+      this.emitProgress(task.id, 'executing', 0, 0, `SDLC Project Created: ${project.id}`);
+
+      // 2. Iterate through phases
+      const phases = [SDLCPhase.REQUIREMENTS, SDLCPhase.DESIGN, SDLCPhase.IMPLEMENTATION];
+
+      for (const phase of phases) {
+        this.emitProgress(task.id, 'executing', phases.indexOf(phase) + 1, phases.length, `Entering ${phase} phase...`);
+
+        // Ensure project is in the right phase
+        if (project.currentPhase !== phase) {
+          await this.orchestrator.transitionPhase({
+            projectId: project.id,
+            fromPhase: project.currentPhase,
+            toPhase: phase,
+            requestedBy: 'AutonomousTaskExecutor',
+            reason: 'Autonomous progression',
+            skipGates: true // Auto-progress during mission
+          });
+        }
+
+        // Get deliverables for this phase
+        const deliverables = project.deliverables.filter(d => d.phase === phase && d.required);
+
+        for (const deliverable of deliverables) {
+          this.emitProgress(task.id, 'executing', phases.indexOf(phase) + 1, phases.length, `Generating deliverable: ${deliverable.name}`);
+
+          await this.orchestrator.assignDeliverable(deliverable.id, 'AutonomousAgent');
+
+          const prompt = `Goal: ${goal}\nPhase: ${phase}\nDeliverable: ${deliverable.name}\nDescription: ${deliverable.description}\n\nProduce a professional, production-ready document or code artifact for this deliverable. Output ONLY the content of the deliverable.`;
+
+          const output = await this.executeClaude(prompt);
+
+          await this.orchestrator.markDeliverableComplete(deliverable.id, [
+            {
+              id: randomUUID(),
+              deliverableId: deliverable.id,
+              type: deliverable.type as any,
+              name: deliverable.name,
+              content: output,
+              createdAt: new Date(),
+              createdBy: 'AutonomousAgent'
+            }
+          ]);
+
+          // Add to task steps for visualization
+          task.steps.push({
+            id: randomUUID(),
+            stepNumber: task.steps.length + 1,
+            description: `${phase.toUpperCase()}: ${deliverable.name}`,
+            status: 'completed',
+            result: `Generated ${deliverable.name}`,
+            completedAt: new Date()
+          });
+        }
+
+        // Run quality gates
+        await this.orchestrator.runQualityGates(project.id, phase);
+      }
+
+      task.status = 'completed';
+      task.completedAt = new Date();
+      task.output = `SDLC Mission Completed Successfully.\nProject ID: ${project.id}\nAll phases Requirements, Design, and Implementation completed with production-ready artifacts.`;
+
+      this.emitProgress(task.id, 'completed', 3, 3, '✅ SDLC Mission completed!');
+      return task;
+
+    } catch (error) {
+      task.status = 'failed';
+      task.error = error instanceof Error ? error.message : 'Unknown error';
+      this.emitProgress(task.id, 'failed', 0, 0, `❌ Mission failed: ${task.error}`);
+      throw error;
+    }
   }
 
   /**

@@ -95,6 +95,7 @@ export class SDLCOrchestrator {
       name: template.name,
       description: template.description,
       required: template.required,
+      type: template.type,
       status: DeliverableStatus.PENDING,
       artifacts: []
     }));
