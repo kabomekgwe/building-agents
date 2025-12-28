@@ -590,6 +590,8 @@ export interface RequirementsFormData {
   successMetrics: string[]
   outOfScope: string[]
   lastSaved?: Date
+  generatedPRD?: string
+  generatedAt?: Date
 }
 
 export interface PlanningSession {

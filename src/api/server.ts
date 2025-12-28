@@ -12,9 +12,10 @@ import { logger } from 'hono/logger';
 import { AgentRouter } from '../runtime/router.js';
 import { AgentExecutor } from '../runtime/executor.js';
 import { SDLCOrchestrator } from '../sdlc/orchestrator.js';
-import { SDLCPhase, PlanningSession } from '../sdlc/types.js';
+import { SDLCPhase, PlanningSession, RequirementsFormData } from '../sdlc/types.js';
 import { AutonomousTaskExecutor } from '../autonomous/task-executor.js';
 import { z } from 'zod';
+import Anthropic from '@anthropic-ai/sdk';
 
 const app = new Hono();
 
@@ -70,6 +71,158 @@ const CompletePhaseSchema = z.object({
   phaseId: z.enum(['requirements', 'design', 'implementation']),
   output: z.any()
 })
+
+/**
+ * Build PRD generation prompt from requirements data
+ */
+function buildPRDPrompt(requirements: RequirementsFormData): string {
+  return `<context>
+The user is planning a new project and has provided the following information:
+
+**Project Name:** ${requirements.projectName}
+
+**High-Level Description:**
+${requirements.description}
+
+**Problem Statement:**
+${requirements.problemStatement}
+
+**Target Audience:**
+${requirements.targetAudience}
+
+**Key Features:**
+${requirements.features.map((f, i) => `${i + 1}. ${f}`).join('\n')}
+
+**Success Metrics:**
+${requirements.successMetrics.map((m, i) => `${i + 1}. ${m}`).join('\n')}
+
+**Out of Scope:**
+${requirements.outOfScope.length > 0
+  ? requirements.outOfScope.map((item, i) => `${i + 1}. ${item}`).join('\n')
+  : 'Not specified'}
+</context>
+
+<task>
+Generate a professional Product Requirements Document (PRD) based on the information above.
+
+Follow modern PRD best practices for 2025:
+- Be concise but comprehensive
+- Focus on shared understanding, not exhaustive detail
+- Include clear rationale for decisions
+- Make it a living document that can evolve
+
+Include all standard sections:
+1. Overview - High-level summary of what's being built and why
+2. Purpose - Problem being solved and objectives
+3. Target Audience - User personas and market segments
+4. Success Metrics - KPIs and measurable outcomes
+5. Features - Specific capabilities with user benefits
+6. Scope - What's included in this release
+7. Out of Scope - Explicitly stated non-goals
+8. Timeline - Suggested milestones and release planning
+
+Format as markdown with clear headings, bullet points, and logical structure.
+</task>
+
+<format>
+# [Project Name] - Product Requirements Document
+
+*Version 1.0 | Generated: [Current Date]*
+
+## Overview
+[2-3 paragraphs describing what's being built and the high-level vision]
+
+## Purpose
+
+### Problem Statement
+[Detailed problem description]
+
+### Objectives
+- [Objective 1]
+- [Objective 2]
+- ...
+
+## Target Audience
+
+### User Personas
+[Describe who will use this]
+
+### Market Segments
+[If applicable, define market positioning]
+
+## Success Metrics
+[List measurable outcomes and KPIs from user input]
+
+## Features
+
+### [Feature Category 1]
+- **[Feature Name]**: [Description and user benefit]
+- ...
+
+### [Feature Category 2]
+- **[Feature Name]**: [Description and user benefit]
+- ...
+
+## Scope
+
+### In Scope
+[What will be delivered in this release]
+
+### Out of Scope
+[Explicitly stated non-goals from user input]
+
+## Timeline
+
+### Suggested Milestones
+- **Phase 1**: [Description] - [Timeframe]
+- **Phase 2**: [Description] - [Timeframe]
+- ...
+
+### Release Planning
+[Recommended release strategy]
+
+---
+
+*This PRD is a living document and should be reviewed and updated as the project evolves.*
+</format>
+
+If any information seems incomplete or unclear, make reasonable assumptions based on the context provided, but note them in the document.
+`
+}
+
+/**
+ * Generate PRD using Claude API
+ */
+async function generatePRD(requirements: RequirementsFormData): Promise<string> {
+  const apiKey = process.env.ANTHROPIC_API_KEY
+
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY environment variable not set')
+  }
+
+  const anthropic = new Anthropic({ apiKey })
+  const prompt = buildPRDPrompt(requirements)
+
+  try {
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4000,
+      temperature: 0.7,
+      system: 'You are an expert product manager with 15 years of experience writing professional Product Requirements Documents (PRDs). You create clear, comprehensive PRDs that align with modern 2025 best practices.',
+      messages: [{ role: 'user', content: prompt }]
+    })
+
+    const prdText = message.content
+      .filter(block => block.type === 'text')
+      .map(block => block.text)
+      .join('\n')
+
+    return prdText
+  } catch (error) {
+    console.error('Claude API error:', error)
+    throw new Error(`Failed to generate PRD: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  }
+}
 
 /**
  * Health check
@@ -744,6 +897,87 @@ app.get('/planning', (c) => {
       margin-top: 2rem;
     }
 
+    .prd-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .prd-actions {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .prd-content {
+      max-width: 800px;
+      line-height: 1.6;
+    }
+
+    .prd-content h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      color: #fff;
+    }
+
+    .prd-content h2 {
+      font-size: 1.5rem;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      color: #e0e0e0;
+    }
+
+    .prd-content h3 {
+      font-size: 1.25rem;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+      color: #d0d0d0;
+    }
+
+    .prd-content p {
+      margin-bottom: 1rem;
+      color: #c0c0c0;
+    }
+
+    .prd-content ul, .prd-content ol {
+      margin-bottom: 1rem;
+      padding-left: 2rem;
+      color: #c0c0c0;
+    }
+
+    .prd-content li {
+      margin-bottom: 0.5rem;
+    }
+
+    .prd-content strong {
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .prd-content code {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 0.9em;
+    }
+
+    .prd-content hr {
+      border: none;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      margin: 2rem 0;
+    }
+
+    .prd-content blockquote {
+      border-left: 4px solid rgba(255, 255, 255, 0.3);
+      padding-left: 1rem;
+      margin: 1rem 0;
+      font-style: italic;
+      color: #b0b0b0;
+    }
+
     @media (max-width: 768px) {
       .phase-stepper {
         grid-template-columns: 1fr;
@@ -1410,9 +1644,224 @@ app.get('/planning', (c) => {
       }
     }
 
-    function handleGeneratePRD() {
-      showStatus('Generating PRD... (will be implemented in next plan)', 'success');
-      console.log('Requirements form data:', requirementsFormData);
+    async function handleGeneratePRD() {
+      const continueBtn = document.getElementById('stepContinueBtn');
+      if (!continueBtn) return;
+
+      continueBtn.disabled = true;
+      continueBtn.textContent = 'Generating PRD...';
+
+      try {
+        const response = await fetch('/api/planning/requirements/generate-prd', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          displayPRD(result.data.prd);
+        } else {
+          showStatus(result.error || 'Failed to generate PRD', 'error');
+          continueBtn.disabled = false;
+          continueBtn.textContent = 'Generate PRD';
+        }
+      } catch (error) {
+        console.error('PRD generation failed:', error);
+        showStatus('Failed to generate PRD. Please try again.', 'error');
+        continueBtn.disabled = false;
+        continueBtn.textContent = 'Generate PRD';
+      }
+    }
+
+    function displayPRD(prdMarkdown) {
+      const container = document.getElementById('phaseForm');
+      container.textContent = '';
+
+      const prdCard = createElement('div', 'glass-card');
+
+      const header = createElement('div', 'prd-header');
+
+      const title = createElement('h2');
+      title.textContent = 'Generated PRD';
+      header.appendChild(title);
+
+      const actions = createElement('div', 'prd-actions');
+
+      const regenerateBtn = createElement('button', 'btn btn-secondary');
+      regenerateBtn.textContent = 'Regenerate';
+      regenerateBtn.addEventListener('click', () => {
+        renderPhaseForm('requirements');
+        currentStep = 4;
+        document.getElementById('step-4').classList.add('active');
+        handleGeneratePRD();
+      });
+
+      const downloadBtn = createElement('button', 'btn btn-secondary');
+      downloadBtn.textContent = 'Download PRD';
+      downloadBtn.addEventListener('click', () => downloadPRD(prdMarkdown));
+
+      const completeBtn = createElement('button', 'btn');
+      completeBtn.textContent = 'Complete Requirements Phase';
+      completeBtn.addEventListener('click', () => completePhase());
+
+      actions.appendChild(regenerateBtn);
+      actions.appendChild(downloadBtn);
+      actions.appendChild(completeBtn);
+      header.appendChild(actions);
+
+      prdCard.appendChild(header);
+
+      const contentDiv = createElement('div', 'prd-content');
+      renderMarkdownSafely(prdMarkdown, contentDiv);
+
+      prdCard.appendChild(contentDiv);
+      container.appendChild(prdCard);
+    }
+
+    function renderMarkdownSafely(markdown, targetElement) {
+      const lines = markdown.split('\n');
+      let currentList = null;
+      let currentListType = null;
+
+      lines.forEach(line => {
+        const trimmed = line.trim();
+
+        if (!trimmed) {
+          if (currentList) {
+            targetElement.appendChild(currentList);
+            currentList = null;
+            currentListType = null;
+          }
+          const spacer = createElement('div');
+          spacer.style.height = '0.5rem';
+          targetElement.appendChild(spacer);
+          return;
+        }
+
+        if (trimmed.startsWith('# ')) {
+          const h1 = createElement('h1');
+          h1.textContent = trimmed.substring(2);
+          targetElement.appendChild(h1);
+        } else if (trimmed.startsWith('## ')) {
+          const h2 = createElement('h2');
+          h2.textContent = trimmed.substring(3);
+          targetElement.appendChild(h2);
+        } else if (trimmed.startsWith('### ')) {
+          const h3 = createElement('h3');
+          h3.textContent = trimmed.substring(4);
+          targetElement.appendChild(h3);
+        } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+          if (!currentList || currentListType !== 'ul') {
+            if (currentList) targetElement.appendChild(currentList);
+            currentList = createElement('ul');
+            currentListType = 'ul';
+          }
+          const li = createElement('li');
+          const text = trimmed.substring(2);
+          parseInlineFormatting(text, li);
+          currentList.appendChild(li);
+        } else if (/^\d+\.\s/.test(trimmed)) {
+          if (!currentList || currentListType !== 'ol') {
+            if (currentList) targetElement.appendChild(currentList);
+            currentList = createElement('ol');
+            currentListType = 'ol';
+          }
+          const li = createElement('li');
+          const text = trimmed.replace(/^\d+\.\s/, '');
+          parseInlineFormatting(text, li);
+          currentList.appendChild(li);
+        } else if (trimmed === '---' || trimmed === '***') {
+          const hr = createElement('hr');
+          targetElement.appendChild(hr);
+        } else if (trimmed.startsWith('> ')) {
+          const blockquote = createElement('blockquote');
+          blockquote.textContent = trimmed.substring(2);
+          targetElement.appendChild(blockquote);
+        } else if (trimmed.startsWith('\`') && trimmed.endsWith('\`') && trimmed.length > 2) {
+          const code = createElement('code');
+          code.textContent = trimmed.slice(1, -1);
+          targetElement.appendChild(code);
+        } else if (trimmed.startsWith('*') && trimmed.endsWith('*') && !trimmed.startsWith('**') && trimmed.length > 2) {
+          const em = createElement('em');
+          em.textContent = trimmed.slice(1, -1);
+          targetElement.appendChild(em);
+        } else {
+          if (currentList) {
+            targetElement.appendChild(currentList);
+            currentList = null;
+            currentListType = null;
+          }
+          const p = createElement('p');
+          parseInlineFormatting(trimmed, p);
+          targetElement.appendChild(p);
+        }
+      });
+
+      if (currentList) {
+        targetElement.appendChild(currentList);
+      }
+    }
+
+    function parseInlineFormatting(text, targetElement) {
+      const parts = text.split(/(\*\*.*?\*\*|\*.*?\*|\`.*?\`)/g);
+
+      parts.forEach(part => {
+        if (!part) return;
+
+        if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+          const strong = createElement('strong');
+          strong.textContent = part.slice(2, -2);
+          targetElement.appendChild(strong);
+        } else if (part.startsWith('*') && part.endsWith('*') && !part.startsWith('**') && part.length > 2) {
+          const em = createElement('em');
+          em.textContent = part.slice(1, -1);
+          targetElement.appendChild(em);
+        } else if (part.startsWith('\`') && part.endsWith('\`') && part.length > 2) {
+          const code = createElement('code');
+          code.textContent = part.slice(1, -1);
+          targetElement.appendChild(code);
+        } else {
+          targetElement.appendChild(document.createTextNode(part));
+        }
+      });
+    }
+
+    function downloadPRD(prdMarkdown) {
+      const blob = new Blob([prdMarkdown], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+
+      const a = createElement('a');
+      a.href = url;
+      a.download = requirementsFormData.projectName.replace(/\s+/g, '-') + '-PRD.md';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    async function completePhase() {
+      try {
+        const response = await fetch('/api/planning/phase/requirements/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phaseId: 'requirements',
+            output: requirementsFormData
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          window.location.reload();
+        } else {
+          showStatus(result.error || 'Failed to complete phase', 'error');
+        }
+      } catch (error) {
+        console.error('Phase completion failed:', error);
+        showStatus('Failed to complete phase. Please try again.', 'error');
+      }
     }
 
     function checkFormValidity() {
@@ -1625,6 +2074,75 @@ app.post('/api/planning/requirements/autosave', async (c) => {
         error: 'Validation failed',
         details: error.errors
       }, 400)
+    }
+
+    return c.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, 500)
+  }
+})
+
+/**
+ * Generate PRD from requirements form data
+ */
+app.post('/api/planning/requirements/generate-prd', async (c) => {
+  try {
+    const session = Array.from(planningSessions.values())[0]
+
+    if (!session) {
+      return c.json({
+        success: false,
+        error: 'No planning session found'
+      }, 404)
+    }
+
+    if (!session.phaseData.requirements) {
+      return c.json({
+        success: false,
+        error: 'Requirements form not completed'
+      }, 400)
+    }
+
+    const requirements = session.phaseData.requirements
+
+    const validItems = (arr: string[]) => arr.filter(item => item.trim().length > 0)
+    const hasCompleteData =
+      requirements.projectName.length >= 3 &&
+      requirements.description.length >= 50 &&
+      requirements.problemStatement.length >= 100 &&
+      requirements.targetAudience.length >= 50 &&
+      validItems(requirements.features).length >= 1 &&
+      validItems(requirements.successMetrics).length >= 1
+
+    if (!hasCompleteData) {
+      return c.json({
+        success: false,
+        error: 'Requirements form must be completed before generating PRD'
+      }, 400)
+    }
+
+    const prd = await generatePRD(requirements)
+
+    session.phaseData.requirements.generatedPRD = prd
+    session.phaseData.requirements.generatedAt = new Date()
+    session.updatedAt = new Date()
+
+    planningSessions.set(session.id, session)
+
+    return c.json({
+      success: true,
+      data: {
+        prd,
+        generatedAt: session.phaseData.requirements.generatedAt
+      }
+    })
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('ANTHROPIC_API_KEY')) {
+      return c.json({
+        success: false,
+        error: 'Claude API key not configured'
+      }, 500)
     }
 
     return c.json({
