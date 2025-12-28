@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-Agent System Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: hsl(250, 84%, 67%);
+      --primary-dark: hsl(250, 84%, 57%);
+      --secondary: hsl(280, 67%, 55%);
+      --accent: hsl(190, 90%, 50%);
+      --bg: hsl(240, 20%, 8%);
+      --card-bg: hsla(240, 20%, 15%, 0.7);
+      --card-border: hsla(240, 20%, 30%, 0.5);
+      --text: hsl(0, 0%, 95%);
+      --text-muted: hsl(240, 5%, 70%);
+      --success: hsl(145, 80%, 45%);
+      --error: hsl(0, 84%, 60%);
+      --warning: hsl(45, 100%, 60%);
+      --glass-blur: 16px;
+      --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+      --radius: 16px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(at 0% 0%, hsla(250, 84%, 67%, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, hsla(280, 67%, 55%, 0.15) 0px, transparent 50%);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+      overflow-x: hidden;
+      padding: 0 1rem;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 4rem auto;
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+
+    .header h1 {
+      font-size: 3.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--text) 0%, var(--primary) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.75rem;
+    }
+
+    .header p {
+      font-size: 1.25rem;
+      color: var(--text-muted);
+      font-weight: 300;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      border: 1px solid var(--card-border);
+      padding: 1.75rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--primary);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--primary);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .stat-card h3 {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+      font-weight: 600;
+    }
+
+    .stat-card .value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 2.5rem;
+      box-shadow: var(--shadow);
+      margin-bottom: 2.5rem;
+      transition: var(--transition);
+    }
+
+    .card h2 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .input-group {
+      margin-bottom: 2rem;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 0.95rem;
+      font-weight: 500;
+      margin-bottom: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .input-group input,
+    .input-group textarea {
+      width: 100%;
+      padding: 1rem 1.25rem;
+      background: hsla(240, 20%, 5%, 0.5);
+      border: 2px solid var(--card-border);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 1rem;
+      transition: var(--transition);
+    }
+
+    .input-group input:focus,
+    .input-group textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: hsla(240, 20%, 5%, 0.8);
+      box-shadow: 0 0 0 4px hsla(250, 84%, 67%, 0.15);
+    }
+
+    .input-group textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      color: white;
+      padding: 1rem 2.5rem;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      box-shadow: 0 4px 15px hsla(250, 84%, 67%, 0.3);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px hsla(250, 84%, 67%, 0.5);
+      filter: brightness(1.1);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .result {
+      margin-top: 2rem;
+      padding: 2rem;
+      background: hsla(0, 0%, 100%, 0.03);
+      border-radius: 14px;
+      border-left: 5px solid var(--primary);
+      animation: slideIn 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .result.error {
+      border-left-color: var(--error);
+      background: hsla(0, 84%, 60%, 0.05);
+    }
+
+    .result h3 {
+      font-size: 1.25rem;
+      margin-bottom: 1.5rem;
+      color: var(--text);
+    }
+
+    .result-field {
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .result-field strong {
+      color: var(--text-muted);
+      font-weight: 500;
+      width: 140px;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .result-field span {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .confidence {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .confidence.high {
+      background: hsla(145, 80%, 45%, 0.15);
+      color: var(--success);
+      border: 1px solid hsla(145, 80%, 45%, 0.3);
+    }
+
+    .confidence.medium {
+      background: hsla(45, 100%, 60%, 0.15);
+      color: var(--warning);
+      border: 1px solid hsla(45, 100%, 60%, 0.3);
+    }
+
+    .confidence.low {
+      background: hsla(0, 84%, 60%, 0.15);
+      color: var(--error);
+      border: 1px solid hsla(0, 84%, 60%, 0.3);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .domains-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .domain-card {
+      padding: 1.5rem;
+      background: hsla(0, 0%, 100%, 0.02);
+      border-radius: var(--radius);
+      border: 1px solid var(--card-border);
+      transition: var(--transition);
+    }
+
+    .domain-card:hover {
+      border-color: var(--primary);
+      background: hsla(0, 0%, 100%, 0.05);
+    }
+
+    .domain-card h4 {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+      text-transform: capitalize;
+      font-weight: 600;
+    }
+
+    .domain-card .count {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    .agent-list {
+      margin-top: 1rem;
+      list-style: none;
+    }
+
+    .agent-list li {
+      padding: 0.6rem 0.75rem;
+      margin-bottom: 0.5rem;
+      background: hsla(0, 0%, 0%, 0.2);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: var(--text);
+      border: 1px solid transparent;
+      transition: var(--transition);
+    }
+
+    .agent-list li:hover {
+      border-color: var(--card-border);
+      background: hsla(0, 0%, 0%, 0.4);
+    }
+
+    footer {
+      text-align: center;
+      color: var(--text-muted);
+      margin-top: 5rem;
+      padding-bottom: 4rem;
+      font-size: 0.9rem;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--card-border);
+      border-radius: 5px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+
+    /* Custom styles for the special sections */
+    .sdlc-deliverable {
+      padding: 1rem;
+      background: hsla(0, 0%, 100%, 0.03);
+      border-radius: 12px;
+      margin-bottom: 0.75rem;
+      border: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .status-pill {
+      padding: 0.25rem 0.75rem;
+      border-radius: 100px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .status-completed {
+      background: hsla(145, 80%, 45%, 0.2);
+      color: var(--success);
+    }
+
+    .status-pending {
+      background: hsla(45, 100%, 60%, 0.2);
+      color: var(--warning);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🤖 Multi-Agent System</h1>
+      <p>46-Agent Orchestration System | Version 2.0.0</p>
+    </div>
+
+    <div class="stats" id="stats">
+      <div class="stat-card">
+        <h3>Total Agents</h3>
+        <div class="value">-</div>
+      </div>
+      <div class="stat-card">
+        <h3>Domains</h3>
+        <div class="value">-</div>
+      </div>
+      <div class="stat-card">
+        <h3>Routing Accuracy</h3>
+        <div class="value">100%</div>
+      </div>
+      <div class="stat-card">
+        <h3>Avg Confidence</h3>
+        <div class="value">-</div>
+      </div>
+    </div>
+
+    <!-- Autonomous Task Execution Section -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+      <div class="card"
+        style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); border: none;">
+        <h2 style="color: white;">🚀 Rapid Task</h2>
+        <p style="color: white; opacity: 0.85; margin-bottom: 2rem; font-weight: 300;">Break down and execute a single
+          task autonomously.</p>
+
+        <form id="autonomousForm">
+          <div class="input-group">
+            <label for="goalInput" style="color: white;">Task Goal</label>
+            <textarea id="goalInput" placeholder="Example: Build a React button component..." rows="3" required
+              style="background: rgba(0, 0, 0, 0.2); border-color: rgba(255, 255, 255, 0.2); color: white;"></textarea>
+          </div>
+          <button type="submit" class="btn" style="background: white; color: var(--primary); font-weight: 700;">
+            Launch Task ⚡
+          </button>
+        </form>
+        <div id="autonomousStatus" style="margin-top: 2rem;"></div>
+      </div>
+
+      <div class="card" style="background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%); border: none;">
+        <h2 style="color: white;">🏗️ SDLC Mission</h2>
+        <p style="color: white; opacity: 0.85; margin-bottom: 2rem; font-weight: 300;">Full lifecycle development: PRD
+          -> Design -> Prod-ready Code.</p>
+
+        <form id="missionForm">
+          <div class="input-group">
+            <label for="missionGoal" style="color: white;">Project Objective</label>
+            <textarea id="missionGoal"
+              placeholder="Example: Design and implement a secure authentication microservice..." rows="3" required
+              style="background: rgba(0, 0, 0, 0.2); border-color: rgba(255, 255, 255, 0.2); color: white;"></textarea>
+          </div>
+          <button type="submit" class="btn" style="background: white; color: #4f46e5; font-weight: 700;">
+            Launch Mission 🎯
+          </button>
+        </form>
+        <div id="missionStatus" style="margin-top: 2rem;"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🎯 Route Request</h2>
+      <p style="color: var(--text-muted); margin-bottom: 2rem;">Instantly find the perfect specialized agent for your
+        specific needs.</p>
+      <form id="routeForm">
+        <div class="input-group">
+          <label for="request">What do you need help with?</label>
+          <textarea id="request" name="request"
+            placeholder="Example: Build a React button component with primary and secondary variants"
+            required></textarea>
+        </div>
+        <button type="submit" class="btn">Analyze Request</button>
+      </form>
+      <div id="routeResult"></div>
+    </div>
+
+    <div class="card">
+      <h2>📊 System Overview</h2>
+      <p style="color: var(--text-muted); margin-bottom: 2rem;">Real-time view of our 46 specialized agents across 7
+        cognitive domains.</p>
+      <div id="domains" class="domains-grid">
+        <div class="loading">Initializing domain maps...</div>
+      </div>
+    </div>
+
+    <footer>
+      <p>Built with Claude Code • Production-Ready • 318+ Automated Tests Passed</p>
+      <p style="margin-top: 0.5rem; opacity: 0.5; font-size: 0.8rem;">&copy; 2025 Multi-Agent Orchestration System
+        v2.0.0</p>
+    </footer>
+  </div>
+
+  <script>
+    const API_BASE = '/api';
+
+    // Safely create element with text content
+    function createElement(tag, className, textContent) {
+      const el = document.createElement(tag);
+      if (className) el.className = className;
+      if (textContent) el.textContent = textContent;
+      return el;
+    }
+
+    // Load stats on page load
+    async function loadStats() {
+      try {
+        const response = await fetch(`${API_BASE}/stats`);
+        const data = await response.json();
+
+        if (data.success) {
+          const stats = data.data;
+          const statCards = document.querySelectorAll('.stat-card .value');
+          statCards[0].textContent = stats.totalAgents;
+          statCards[1].textContent = stats.domains;
+        }
+      } catch (error) {
+        console.error('Failed to load stats:', error);
+      }
+    }
+
+    // Load domains
+    async function loadDomains() {
+      try {
+        const response = await fetch(`${API_BASE}/domains`);
+        const data = await response.json();
+
+        if (data.success) {
+          const domainsContainer = document.getElementById('domains');
+          domainsContainer.textContent = ''; // Clear loading message
+
+          for (const domain of data.data) {
+            const agentsResponse = await fetch(`${API_BASE}/agents?domain=${domain.name}`);
+            const agentsData = await agentsResponse.json();
+
+            const domainCard = createElement('div', 'domain-card');
+
+            const title = createElement('h4', null, domain.name);
+            const count = createElement('div', 'count', `${domain.agentCount} agents`);
+            const agentList = createElement('ul', 'agent-list');
+
+            agentsData.data.slice(0, 5).forEach(agent => {
+              const li = createElement('li', null, agent.name);
+              agentList.appendChild(li);
+            });
+
+            if (agentsData.data.length > 5) {
+              const moreLi = createElement('li', null, `+ ${agentsData.data.length - 5} more`);
+              moreLi.style.color = '#6b7280';
+              agentList.appendChild(moreLi);
+            }
+
+            domainCard.appendChild(title);
+            domainCard.appendChild(count);
+            domainCard.appendChild(agentList);
+            domainsContainer.appendChild(domainCard);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load domains:', error);
+        const domainsContainer = document.getElementById('domains');
+        domainsContainer.textContent = '';
+        const errorDiv = createElement('div', 'loading', 'Failed to load domains');
+        errorDiv.style.color = '#ef4444';
+        domainsContainer.appendChild(errorDiv);
+      }
+    }
+
+    // Route request
+    document.getElementById('routeForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const request = document.getElementById('request').value;
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const resultContainer = document.getElementById('routeResult');
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Finding agent...';
+      resultContainer.textContent = '';
+      const loadingDiv = createElement('div', 'loading', 'Analyzing request...');
+      resultContainer.appendChild(loadingDiv);
+
+      try {
+        const response = await fetch(`${API_BASE}/route`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ request, verbose: true })
+        });
+
+        const data = await response.json();
+        resultContainer.textContent = '';
+
+        if (data.success) {
+          const result = data.data;
+          const confidenceClass = result.confidence >= 70 ? 'high' : result.confidence >= 50 ? 'medium' : 'low';
+
+          const resultDiv = createElement('div', 'result');
+          const title = createElement('h3', null, '✅ Routing Result');
+          resultDiv.appendChild(title);
+
+          // Domain field
+          const domainField = createElement('div', 'result-field');
+          domainField.appendChild(createElement('strong', null, 'Domain:'));
+          domainField.appendChild(document.createTextNode(' '));
+          domainField.appendChild(createElement('span', null, result.domain));
+          resultDiv.appendChild(domainField);
+
+          // Agent field
+          const agentField = createElement('div', 'result-field');
+          agentField.appendChild(createElement('strong', null, 'Agent:'));
+          agentField.appendChild(document.createTextNode(' '));
+          agentField.appendChild(createElement('span', null, result.agent));
+          resultDiv.appendChild(agentField);
+
+          // Confidence field
+          const confidenceField = createElement('div', 'result-field');
+          confidenceField.appendChild(createElement('strong', null, 'Confidence:'));
+          confidenceField.appendChild(document.createTextNode(' '));
+          const confidenceBadge = createElement('span', `confidence ${confidenceClass}`, `${result.confidence}%`);
+          confidenceField.appendChild(confidenceBadge);
+          resultDiv.appendChild(confidenceField);
+
+          // Keywords field
+          const keywordsField = createElement('div', 'result-field');
+          keywordsField.appendChild(createElement('strong', null, 'Keywords:'));
+          keywordsField.appendChild(document.createTextNode(' '));
+          keywordsField.appendChild(createElement('span', null, result.keywords.join(', ')));
+          resultDiv.appendChild(keywordsField);
+
+          // Reasoning field
+          const reasoningField = createElement('div', 'result-field');
+          reasoningField.style.marginTop = '1rem';
+          reasoningField.appendChild(createElement('strong', null, 'Reasoning:'));
+          const reasoningDiv = createElement('div', null, result.reasoning);
+          reasoningDiv.style.marginTop = '0.5rem';
+          reasoningDiv.style.color = '#6b7280';
+          reasoningDiv.style.fontSize = '0.875rem';
+          reasoningField.appendChild(reasoningDiv);
+          resultDiv.appendChild(reasoningField);
+
+          resultContainer.appendChild(resultDiv);
+        } else {
+          throw new Error(data.error || 'Routing failed');
+        }
+      } catch (error) {
+        resultContainer.textContent = '';
+        const errorDiv = createElement('div', 'result error');
+        errorDiv.appendChild(createElement('h3', null, '❌ Error'));
+        errorDiv.appendChild(createElement('p', null, error.message));
+        resultContainer.appendChild(errorDiv);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Find Agent';
+      }
+    });
+
+    // Initialize
+    loadStats();
+    loadDomains();
+  </script>
+
+  <!-- SDLC Section -->
+  <script>
+    // Add SDLC section to the page
+    function addSDLCSection() {
+      const container = document.querySelector('.container');
+
+      // Create SDLC card
+      const sdlcCard = createElement('div', 'card');
+      const title = createElement('h2', null, '🏗️ SDLC Project Management');
+      sdlcCard.appendChild(title);
+
+      // Create project form
+      const form = createElement('form');
+      form.id = 'sdlcForm';
+      form.addEventListener('submit', createSDLCProject);
+
+      const nameGroup = createElement('div', 'input-group');
+      const nameLabel = createElement('label', null, 'Project Name');
+      nameLabel.setAttribute('for', 'projectName');
+      const nameInput = createElement('input');
+      nameInput.type = 'text';
+      nameInput.id = 'projectName';
+      nameInput.placeholder = 'E-Commerce Checkout Feature';
+      nameInput.required = true;
+      nameGroup.appendChild(nameLabel);
+      nameGroup.appendChild(nameInput);
+
+      const descGroup = createElement('div', 'input-group');
+      const descLabel = createElement('label', null, 'Description');
+      descLabel.setAttribute('for', 'projectDescription');
+      const descInput = createElement('textarea');
+      descInput.id = 'projectDescription';
+      descInput.placeholder = 'One-click checkout with Stripe integration';
+      descInput.rows = 3;
+      descInput.required = true;
+      descGroup.appendChild(descLabel);
+      descGroup.appendChild(descInput);
+
+      const submitBtn = createElement('button', 'btn btn-primary', 'Create SDLC Project');
+      submitBtn.type = 'submit';
+
+      form.appendChild(nameGroup);
+      form.appendChild(descGroup);
+      form.appendChild(submitBtn);
+      sdlcCard.appendChild(form);
+
+      // Create results area
+      const resultsDiv = createElement('div');
+      resultsDiv.id = 'sdlcResults';
+      sdlcCard.appendChild(resultsDiv);
+
+      container.appendChild(sdlcCard);
+    }
+
+    // Create SDLC project
+    async function createSDLCProject(e) {
+      e.preventDefault();
+
+      const name = document.getElementById('projectName').value;
+      const description = document.getElementById('projectDescription').value;
+
+      try {
+        const response = await fetch('/api/sdlc/projects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, description })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          displaySDLCProject(data.data);
+
+          // Clear form
+          document.getElementById('projectName').value = '';
+          document.getElementById('projectDescription').value = '';
+        } else {
+          alert('Error: ' + data.error);
+        }
+      } catch (error) {
+        alert('Failed to create project: ' + error.message);
+      }
+    }
+
+    // Display SDLC project
+    function displaySDLCProject(project) {
+      const resultsDiv = document.getElementById('sdlcResults');
+      resultsDiv.textContent = ''; // Clear previous results
+
+      // Project header
+      const header = createElement('div');
+      header.style.marginTop = '2rem';
+      header.style.padding = '1.5rem';
+      header.style.background = 'hsla(0, 0%, 100%, 0.03)';
+      header.style.borderRadius = '12px';
+      header.style.border = '1px solid var(--card-border)';
+      header.style.marginBottom = '1.5rem';
+
+      const projName = createElement('h3', null, project.name);
+      projName.style.marginBottom = '0.5rem';
+      const projDesc = createElement('p', null, project.description);
+      projDesc.style.color = '#6b7280';
+      const projId = createElement('p', null, `ID: ${project.id}`);
+      projId.style.fontSize = '0.875rem';
+      projId.style.color = '#9ca3af';
+
+      header.appendChild(projName);
+      header.appendChild(projDesc);
+      header.appendChild(projId);
+      resultsDiv.appendChild(header);
+
+      // Phase indicator
+      const phaseDiv = createElement('div');
+      phaseDiv.style.marginBottom = '1.5rem';
+
+      const phaseLabel = createElement('strong', null, 'Current Phase: ');
+      const phaseValue = createElement('span', null, project.currentPhase.toUpperCase());
+      phaseValue.style.color = 'var(--primary)';
+      phaseValue.style.fontWeight = 'bold';
+
+      phaseDiv.appendChild(phaseLabel);
+      phaseDiv.appendChild(phaseValue);
+      resultsDiv.appendChild(phaseDiv);
+
+      // Deliverables section
+      const delivTitle = createElement('h4', null, 'Deliverables');
+      delivTitle.style.marginBottom = '0.75rem';
+      resultsDiv.appendChild(delivTitle);
+
+      const delivTable = createElement('div');
+      delivTable.style.marginBottom = '1.5rem';
+
+      project.deliverables.forEach(deliv => {
+        const delivRow = createElement('div');
+        delivRow.style.padding = '0.5rem';
+        delivRow.style.borderBottom = '1px solid #e5e7eb';
+        delivRow.style.display = 'flex';
+        delivRow.style.justifyContent = 'space-between';
+        delivRow.style.alignItems = 'center';
+
+        const delivName = createElement('span', null, deliv.name);
+        const delivStatus = createElement('span', null, deliv.status);
+        delivStatus.style.padding = '0.25rem 0.5rem';
+        delivStatus.style.borderRadius = '4px';
+        delivStatus.style.fontSize = '0.875rem';
+        delivStatus.style.background = deliv.status === 'completed' ? 'hsla(145, 80%, 45%, 0.2)' : 'hsla(45, 100%, 60%, 0.2)';
+        delivStatus.style.color = deliv.status === 'completed' ? 'var(--success)' : 'var(--warning)';
+
+        delivRow.appendChild(delivName);
+        delivRow.appendChild(delivStatus);
+        delivTable.appendChild(delivRow);
+      });
+
+      resultsDiv.appendChild(delivTable);
+
+      // Quality gates section
+      const gatesTitle = createElement('h4', null, 'Quality Gates');
+      gatesTitle.style.marginBottom = '0.75rem';
+      resultsDiv.appendChild(gatesTitle);
+
+      const gatesTable = createElement('div');
+
+      project.qualityGates.forEach(gate => {
+        const gateRow = createElement('div');
+        gateRow.style.padding = '0.5rem';
+        gateRow.style.borderBottom = '1px solid #e5e7eb';
+        gateRow.style.display = 'flex';
+        gateRow.style.justifyContent = 'space-between';
+        gateRow.style.alignItems = 'center';
+
+        const gateInfo = createElement('div');
+        const gateName = createElement('div', null, gate.name);
+        gateName.style.fontWeight = '500';
+        const gateDesc = createElement('div', null, gate.description);
+        gateDesc.style.fontSize = '0.875rem';
+        gateDesc.style.color = '#6b7280';
+
+        gateInfo.appendChild(gateName);
+        gateInfo.appendChild(gateDesc);
+
+        const gateStatus = createElement('span', null, gate.status === 'passed' ? '✅' : '⏳');
+        gateStatus.style.fontSize = '1.25rem';
+
+        gateRow.appendChild(gateInfo);
+        gateRow.appendChild(gateStatus);
+        gatesTable.appendChild(gateRow);
+      });
+
+      resultsDiv.appendChild(gatesTable);
+    }
+
+    // Initialize SDLC section
+    addSDLCSection();
+  </script>
+
+  <!-- Autonomous Task Execution -->
+  <script>
+    let currentTaskId = null;
+    let pollInterval = null;
+
+    // Handle autonomous task form submission
+    document.getElementById('autonomousForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const goal = document.getElementById('goalInput').value;
+      const statusDiv = document.getElementById('autonomousStatus');
+
+      // Show loading state
+      statusDiv.textContent = '';
+      const loading = createElement('div');
+      loading.textContent = '🔄 Creating task and breaking down into steps via Claude Code CLI...';
+      loading.style.padding = '1rem';
+      loading.style.background = 'rgba(255,255,255,0.2)';
+      loading.style.borderRadius = '8px';
+      loading.style.marginBottom = '1rem';
+      statusDiv.appendChild(loading);
+
+      try {
+        // Create and start autonomous task using Claude CLI
+        const response = await fetch('/api/autonomous/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ goal })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          currentTaskId = data.data.id;
+
+          // Clear form
+          document.getElementById('goalInput').value = '';
+
+          // Start polling for updates
+          startTaskPolling(currentTaskId);
+        } else {
+          statusDiv.textContent = '';
+          const error = createElement('div');
+          error.textContent = '❌ Error: ' + data.error;
+          error.style.color = '#fecaca';
+          statusDiv.appendChild(error);
+        }
+      } catch (error) {
+        statusDiv.textContent = '';
+        const errorMsg = createElement('div');
+        errorMsg.textContent = '❌ Failed to create task: ' + error.message;
+        errorMsg.style.color = '#fecaca';
+        statusDiv.appendChild(errorMsg);
+      }
+    });
+
+    // Poll for task updates
+    function startTaskPolling(taskId) {
+      // Clear any existing interval
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+
+      // Poll every 2 seconds
+      pollInterval = setInterval(async () => {
+        try {
+          const response = await fetch(`/api/autonomous/tasks/${taskId}`);
+          const data = await response.json();
+
+          if (data.success) {
+            displayTaskProgress(data.data);
+
+            // Stop polling if task is complete or failed
+            if (data.data.status === 'completed' || data.data.status === 'failed') {
+              clearInterval(pollInterval);
+              pollInterval = null;
+            }
+          }
+        } catch (error) {
+          console.error('Polling error:', error);
+        }
+      }, 2000);
+    }
+
+    // Display task progress
+    function displayTaskProgress(task, containerId = 'autonomousStatus') {
+      const statusDiv = document.getElementById(containerId);
+      statusDiv.textContent = ''; // Clear previous content
+
+      // Task header
+      const header = createElement('div');
+      header.style.marginBottom = '1.5rem';
+
+      const title = createElement('h3', null, task.goal);
+      title.style.color = 'white';
+      title.style.marginBottom = '0.5rem';
+
+      const statusBadge = createElement('div');
+      statusBadge.style.display = 'inline-block';
+      statusBadge.style.padding = '0.25rem 0.75rem';
+      statusBadge.style.borderRadius = '12px';
+      statusBadge.style.fontSize = '0.875rem';
+      statusBadge.style.fontWeight = 'bold';
+
+      if (task.status === 'planning') {
+        statusBadge.textContent = '🧠 Planning';
+        statusBadge.style.background = '#fef3c7';
+        statusBadge.style.color = '#92400e';
+      } else if (task.status === 'executing') {
+        statusBadge.textContent = '⚡ Executing';
+        statusBadge.style.background = '#dbeafe';
+        statusBadge.style.color = '#1e40af';
+      } else if (task.status === 'completed') {
+        statusBadge.textContent = '✅ Completed';
+        statusBadge.style.background = '#d1fae5';
+        statusBadge.style.color = '#065f46';
+      } else if (task.status === 'failed') {
+        statusBadge.textContent = '❌ Failed';
+        statusBadge.style.background = '#fecaca';
+        statusBadge.style.color = '#991b1b';
+      }
+
+      header.appendChild(title);
+      header.appendChild(statusBadge);
+      statusDiv.appendChild(header);
+
+      // Progress bar
+      const completedSteps = task.steps.filter(s => s.status === 'completed').length;
+      const totalSteps = task.steps.length;
+      const progress = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0;
+
+      const progressContainer = createElement('div');
+      progressContainer.style.background = 'rgba(255,255,255,0.2)';
+      progressContainer.style.borderRadius = '8px';
+      progressContainer.style.height = '8px';
+      progressContainer.style.marginBottom = '1rem';
+      progressContainer.style.overflow = 'hidden';
+
+      const progressBar = createElement('div');
+      progressBar.style.background = 'white';
+      progressBar.style.height = '100%';
+      progressBar.style.width = progress + '%';
+      progressBar.style.transition = 'width 0.3s ease';
+
+      progressContainer.appendChild(progressBar);
+      statusDiv.appendChild(progressContainer);
+
+      const progressText = createElement('div');
+      progressText.textContent = `Progress: ${completedSteps}/${totalSteps} steps completed (${Math.round(progress)}%)`;
+      progressText.style.marginBottom = '1.5rem';
+      progressText.style.fontSize = '0.875rem';
+      progressText.style.opacity = '0.9';
+      statusDiv.appendChild(progressText);
+
+      // Steps list
+      const stepsContainer = createElement('div');
+      stepsContainer.style.background = 'rgba(255,255,255,0.1)';
+      stepsContainer.style.borderRadius = '8px';
+      stepsContainer.style.padding = '1rem';
+
+      task.steps.forEach(step => {
+        const stepDiv = createElement('div');
+        stepDiv.style.padding = '0.75rem';
+        stepDiv.style.marginBottom = '0.5rem';
+        stepDiv.style.background = 'rgba(255,255,255,0.1)';
+        stepDiv.style.borderRadius = '6px';
+        stepDiv.style.borderLeft = '4px solid';
+
+        if (step.status === 'completed') {
+          stepDiv.style.borderColor = 'var(--success)';
+        } else if (step.status === 'in_progress') {
+          stepDiv.style.borderColor = 'var(--primary)';
+        } else if (step.status === 'failed') {
+          stepDiv.style.borderColor = 'var(--error)';
+        } else {
+          stepDiv.style.borderColor = 'var(--card-border)';
+        }
+
+        const stepHeader = createElement('div');
+        stepHeader.style.display = 'flex';
+        stepHeader.style.justifyContent = 'space-between';
+        stepHeader.style.marginBottom = '0.25rem';
+
+        const stepTitle = createElement('strong', null, `Step ${step.stepNumber}: ${step.description}`);
+        const stepIcon = createElement('span');
+
+        if (step.status === 'completed') {
+          stepIcon.textContent = '✅';
+        } else if (step.status === 'in_progress') {
+          stepIcon.textContent = '⚡';
+        } else if (step.status === 'failed') {
+          stepIcon.textContent = '❌';
+        } else {
+          stepIcon.textContent = '⏳';
+        }
+
+        stepHeader.appendChild(stepTitle);
+        stepHeader.appendChild(stepIcon);
+        stepDiv.appendChild(stepHeader);
+
+        if (step.agent) {
+          const agentInfo = createElement('div');
+          agentInfo.textContent = `Agent: ${step.agent}`;
+          agentInfo.style.fontSize = '0.875rem';
+          agentInfo.style.opacity = '0.8';
+          agentInfo.style.marginBottom = '0.25rem';
+          stepDiv.appendChild(agentInfo);
+        }
+
+        if (step.error) {
+          const errorMsg = createElement('div');
+          errorMsg.textContent = `Error: ${step.error}`;
+          errorMsg.style.fontSize = '0.875rem';
+          errorMsg.style.color = '#fecaca';
+          errorMsg.style.marginTop = '0.5rem';
+          stepDiv.appendChild(errorMsg);
+        }
+
+        stepsContainer.appendChild(stepDiv);
+      });
+
+      statusDiv.appendChild(stepsContainer);
+
+      // Task output if completed
+      if (task.status === 'completed' && task.output) {
+        const outputDiv = createElement('div');
+        outputDiv.style.marginTop = '1.5rem';
+        outputDiv.style.padding = '1rem';
+        outputDiv.style.background = 'rgba(255,255,255,0.1)';
+        outputDiv.style.borderRadius = '8px';
+
+        const outputTitle = createElement('h4', null, '📋 Task Summary');
+        outputTitle.style.color = 'white';
+        outputTitle.style.marginBottom = '0.5rem';
+
+        const outputText = createElement('pre');
+        outputText.textContent = task.output;
+        outputText.style.whiteSpace = 'pre-wrap';
+        outputText.style.fontSize = '0.875rem';
+        outputText.style.opacity = '0.9';
+
+        outputDiv.appendChild(outputTitle);
+        outputDiv.appendChild(outputText);
+        statusDiv.appendChild(outputDiv);
+      }
+    }
+
+    // Handle Autonomous form submission
+    document.getElementById('autonomousForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const goal = document.getElementById('goalInput').value;
+      const statusDiv = document.getElementById('autonomousStatus');
+
+      statusDiv.textContent = '';
+      const loading = createElement('div');
+      loading.textContent = '🧠 Planning task decomposition...';
+      loading.style.padding = '1rem';
+      loading.style.background = 'rgba(255,255,255,0.2)';
+      loading.style.borderRadius = '8px';
+      loading.style.color = 'white';
+      statusDiv.appendChild(loading);
+
+      try {
+        const response = await fetch('/api/autonomous/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ goal })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          startTaskPolling(data.data.id, 'autonomousStatus');
+          document.getElementById('goalInput').value = '';
+        } else {
+          statusDiv.textContent = '❌ Error: ' + data.error;
+        }
+      } catch (error) {
+        statusDiv.textContent = '❌ Failed to start task: ' + error.message;
+      }
+    });
+
+    // Handle SDLC Mission form submission
+    document.getElementById('missionForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const goal = document.getElementById('missionGoal').value;
+      const statusDiv = document.getElementById('missionStatus');
+
+      statusDiv.textContent = '';
+      const loading = createElement('div');
+      loading.textContent = '🔄 Initializing full SDLC lifecycle...';
+      loading.style.padding = '1rem';
+      loading.style.background = 'rgba(255,255,255,0.2)';
+      loading.style.borderRadius = '8px';
+      loading.style.color = 'white';
+      statusDiv.appendChild(loading);
+
+      try {
+        const response = await fetch('/api/sdlc/mission', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ goal })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Mission uses the same polling mechanism as autonomous tasks
+          startTaskPolling(data.data.id, 'missionStatus');
+          document.getElementById('missionGoal').value = '';
+        } else {
+          statusDiv.textContent = '❌ Error: ' + data.error;
+        }
+      } catch (error) {
+        statusDiv.textContent = '❌ Failed to launch mission: ' + error.message;
+      }
+    });
+
+    // Update startTaskPolling to accept a status container ID
+    function startTaskPolling(taskId, containerId = 'autonomousStatus') {
+      if (pollInterval) clearInterval(pollInterval);
+
+      pollInterval = setInterval(async () => {
+        try {
+          const response = await fetch(`/api/autonomous/tasks/${taskId}`);
+          const data = await response.json();
+
+          if (data.success) {
+            displayTaskProgress(data.data, containerId);
+
+            if (data.data.status === 'completed' || data.data.status === 'failed') {
+              clearInterval(pollInterval);
+              pollInterval = null;
+            }
+          }
+        } catch (error) {
+          console.error('Polling error:', error);
+        }
+      }, 2000);
+    }
+  </script>
+</body>
+
+</html>

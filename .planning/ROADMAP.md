@@ -1,0 +1,86 @@
+# Roadmap: Documentation-First Planning UI
+
+## Overview
+
+Build a web-based UI that enforces professional planning workflows before code implementation. The journey starts with extending the existing Hono web dashboard to add a guided SDLC workflow interface. Users complete Requirements → Design → Implementation Planning phases, with each phase generating professional documentation (PRDs, specs, ADRs) as markdown files compatible with Claude Code CLI workflows. Hard phase gates prevent skipping steps, ensuring disciplined planning before coding begins.
+
+## Domain Expertise
+
+None
+
+## Phases
+
+- [x] **Phase 1: UI Foundation** - Set up planning workflow UI framework ✓
+- [x] **Phase 2: Requirements Phase UI** - Build guided PRD generation interface ✓
+- [x] **Phase 3: Design Phase UI** - Implement technical spec and ADR creation ✓
+- [x] **Phase 4: File Generation & Export** - Generate Claude Code-compatible markdown files ✓
+- [x] **Phase 5: Integration & Polish** - Connect to existing SDLC orchestrator, add progress tracking ✓
+
+## Phase Details
+
+### Phase 1: UI Foundation
+**Goal**: Extend existing web dashboard with planning workflow UI framework and phase navigation
+**Depends on**: Nothing (first phase)
+**Research**: Unlikely (extending existing Hono server and HTML/CSS patterns from public/index.html)
+**Plans**: 1
+
+Plans:
+- [x] 01-01-PLAN.md: Set up planning workflow UI framework with phase navigation (4 tasks) ✓
+
+### Phase 2: Requirements Phase UI
+**Goal**: Build guided interface for PRD generation with Claude API integration
+**Depends on**: Phase 1
+**Research**: Likely (effective form patterns for requirements gathering, Claude API prompts for PRD generation)
+**Research topics**:
+- Professional PRD templates and structure
+- Effective Q&A patterns for requirements elicitation
+- Claude API prompt engineering for document generation
+- Form validation and user input handling patterns
+**Plans**: 2
+
+Plans:
+- [x] 02-01-PLAN.md: Requirements form UI with validation and autosave (3 tasks) ✓
+- [x] 02-02-PLAN.md: Claude API PRD generation and display (3 tasks, 1 checkpoint) ✓
+
+### Phase 3: Design Phase UI
+**Goal**: Implement technical specification and Architecture Decision Record (ADR) creation interface
+**Depends on**: Phase 2
+**Research**: Likely (ADR format standards, technical spec templates)
+**Research topics**:
+- ADR template formats (e.g., Michael Nygard's template)
+- Technical specification best practices
+- System design documentation patterns
+- Component/module breakdown UI patterns
+**Plans**: 2
+
+Plans:
+- [x] 03-01-PLAN.md: Design form UI with validation and autosave (3 tasks) ✓
+- [x] 03-02-PLAN.md: Claude API Tech Spec and ADR generation (4 tasks, 1 checkpoint) ✓
+
+### Phase 4: File Generation & Export
+**Goal**: Generate markdown files with frontmatter compatible with Claude Code CLI workflows
+**Depends on**: Phase 3
+**Research**: Unlikely (standard file I/O and markdown templating)
+**Plans**: 1
+
+Plans:
+- [x] 04-01-PLAN.md: File export with YAML frontmatter (4 tasks, 1 checkpoint) ✓
+
+### Phase 5: Integration & Polish
+**Goal**: Connect UI to existing SDLC orchestrator, add progress tracking and visual polish
+**Depends on**: Phase 4
+**Research**: Unlikely (internal integration with existing codebase patterns)
+**Plans**: 1
+
+Plans:
+- [x] 05-01-PLAN.md: Enhanced UX, session persistence, optional orchestrator integration (6 tasks) ✓
+
+## Progress
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 1. UI Foundation | 1/1 | ✓ Complete | 2025-12-28 |
+| 2. Requirements Phase UI | 2/2 | ✓ Complete | 2025-12-28 |
+| 3. Design Phase UI | 2/2 | ✓ Complete | 2025-12-28 |
+| 4. File Generation & Export | 1/1 | ✓ Complete | 2025-12-28 |
+| 5. Integration & Polish | 1/1 | ✓ Complete | 2025-12-28 |
