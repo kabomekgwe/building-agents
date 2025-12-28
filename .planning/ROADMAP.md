@@ -13,7 +13,7 @@ None
 - [x] **Phase 1: UI Foundation** - Set up planning workflow UI framework ✓
 - [x] **Phase 2: Requirements Phase UI** - Build guided PRD generation interface ✓
 - [x] **Phase 3: Design Phase UI** - Implement technical spec and ADR creation ✓
-- [ ] **Phase 4: File Generation & Export** - Generate Claude Code-compatible markdown files
+- [x] **Phase 4: File Generation & Export** - Generate Claude Code-compatible markdown files ✓
 - [ ] **Phase 5: Integration & Polish** - Connect to existing SDLC orchestrator, add progress tracking
 
 ## Phase Details
@@ -64,7 +64,7 @@ Plans:
 **Plans**: 1
 
 Plans:
-- [ ] 04-01-PLAN.md: File export with YAML frontmatter (4 tasks, 1 checkpoint)
+- [x] 04-01-PLAN.md: File export with YAML frontmatter (4 tasks, 1 checkpoint) ✓
 
 ### Phase 5: Integration & Polish
 **Goal**: Connect UI to existing SDLC orchestrator, add progress tracking and visual polish
@@ -82,5 +82,5 @@ Plans:
 | 1. UI Foundation | 1/1 | ✓ Complete | 2025-12-28 |
 | 2. Requirements Phase UI | 2/2 | ✓ Complete | 2025-12-28 |
 | 3. Design Phase UI | 2/2 | ✓ Complete | 2025-12-28 |
-| 4. File Generation & Export | 0/1 | Planning complete | - |
+| 4. File Generation & Export | 1/1 | ✓ Complete | 2025-12-28 |
 | 5. Integration & Polish | 0/TBD | Not started | - |

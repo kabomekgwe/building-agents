@@ -22,19 +22,19 @@
 
 ## Current Position
 
-Phase: 4 of 5 (File Generation & Export)
-Plan: 04-01-PLAN.md (File export with YAML frontmatter)
-Status: Ready to execute
-Last activity: 2025-12-28 - Created 04-01-PLAN.md (4 tasks: frontmatter generation, export API, frontend UI, verification checkpoint)
+Phase: 5 of 5 (Integration & Polish)
+Plan: TBD (planning not yet started)
+Status: Ready to plan
+Last activity: 2025-12-28 - Completed 04-01-PLAN.md (File export with YAML frontmatter)
 
-Progress: ██████░░░░ 60%
+Progress: ████████░░ 80%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: ~20 min/plan
-- Total execution time: ~1 hour 44 min
+- Total plans completed: 6
+- Average duration: ~23 min/plan
+- Total execution time: ~2 hours 19 min
 
 **By Phase:**
 
@@ -43,10 +43,11 @@ Progress: ██████░░░░ 60%
 | 1. UI Foundation | 1 | ~1 hour | ~1 hour |
 | 2. Requirements Phase UI | 2 | ~20 min | ~10 min |
 | 3. Design Phase UI | 2 | ~24 min | ~12 min |
+| 4. File Generation & Export | 1 | ~35 min | ~35 min |
 
 **Recent Trend:**
-- Last 5 plans: [02-01-PLAN.md ✓, 02-02-PLAN.md ✓, 03-01-PLAN.md ✓, 03-02-PLAN.md ✓]
-- Trend: Consistent velocity - Phase 3 completed in 24 min total (segmented execution with checkpoint)
+- Last 5 plans: [02-02-PLAN.md ✓, 03-01-PLAN.md ✓, 03-02-PLAN.md ✓, 04-01-PLAN.md ✓]
+- Trend: Steady velocity - Phase 4 completed in 35 min (linear execution, 4 tasks)
 
 *Updated after each plan completion*
 
@@ -76,6 +77,11 @@ Progress: ██████░░░░ 60%
 | 3 | Partial success for ADR generation | Individual ADR failures don't block other ADRs; user gets maximum value from generation |
 | 3 | String concatenation over template literals | Browser compatibility; avoids TypeScript compilation errors in embedded scripts |
 | 3 | Dynamic completePhase() function | Single function handles all phases via detection; eliminates code duplication |
+| 4 | YAML frontmatter structure | Standardized fields (phase, document_type, generated_at, project_name, version) for Claude Code CLI compatibility |
+| 4 | Server-side export endpoints | Frontmatter generation on server ensures consistency; client-side Blob API still used for download trigger |
+| 4 | Kebab-case filename sanitization | Regex pattern removes special chars; ADR numbering extracted from ID ("ADR-001" → "001") |
+| 4 | Sequential download with 200ms delay | Prevents browser security blocking; progress indicator shows current/total count |
+| 4 | Green button highlight for export | Visual differentiation (`rgba(34, 197, 94, 0.2)`) distinguishes export (with frontmatter) from download (without) |
 
 ### Deferred Issues
 

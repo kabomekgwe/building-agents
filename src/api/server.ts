@@ -411,6 +411,74 @@ async function generateADR(
 }
 
 /**
+ * Add YAML frontmatter to PRD markdown
+ */
+function addFrontmatterToPRD(prd: string, metadata: {
+  projectName: string
+  generatedAt: Date
+}): string {
+  const sanitizedProjectName = metadata.projectName.replace(/"/g, '\\"');
+  const frontmatter = `---
+phase: requirements
+document_type: PRD
+generated_at: ${metadata.generatedAt.toISOString()}
+project_name: "${sanitizedProjectName}"
+version: "1.0"
+---
+
+`;
+  return frontmatter + prd;
+}
+
+/**
+ * Add YAML frontmatter to Technical Specification markdown
+ */
+function addFrontmatterToTechSpec(techSpec: string, metadata: {
+  projectName: string
+  generatedAt: Date
+}): string {
+  const sanitizedProjectName = metadata.projectName.replace(/"/g, '\\"');
+  const frontmatter = `---
+phase: design
+document_type: Technical Specification
+generated_at: ${metadata.generatedAt.toISOString()}
+project_name: "${sanitizedProjectName}"
+version: "1.0"
+---
+
+`;
+  return frontmatter + techSpec;
+}
+
+/**
+ * Add YAML frontmatter to ADR markdown
+ */
+function addFrontmatterToADR(adr: GeneratedADR, metadata: {
+  projectName: string
+  adrIndex: number
+}): string {
+  const sanitizedProjectName = metadata.projectName.replace(/"/g, '\\"');
+  const sanitizedTitle = adr.title.replace(/"/g, '\\"');
+
+  // Extract ADR number from ID (e.g., "ADR-001" -> "001")
+  const adrNumber = adr.id.replace('ADR-', '');
+
+  const frontmatter = `---
+phase: design
+document_type: Architecture Decision Record
+adr_number: "${adrNumber}"
+adr_title: "${sanitizedTitle}"
+status: proposed
+generated_at: ${adr.generatedAt.toISOString()}
+project_name: "${sanitizedProjectName}"
+version: "1.0"
+---
+
+`;
+  return frontmatter + adr.content;
+}
+
+/**
  * Health check
  */
 app.get('/health', (c) => {
@@ -2940,12 +3008,44 @@ app.get('/planning', (c) => {
       downloadBtn.textContent = 'Download PRD';
       downloadBtn.addEventListener('click', () => downloadPRD(prdMarkdown));
 
+      const exportBtn = createElement('button', 'btn btn-secondary');
+      exportBtn.textContent = 'Export PRD';
+      exportBtn.style.backgroundColor = 'rgba(34, 197, 94, 0.2)';
+      exportBtn.addEventListener('click', () => {
+        exportBtn.disabled = true;
+        exportBtn.textContent = 'Exporting...';
+        fetch('/api/planning/export/prd')
+          .then(response => {
+            if (!response.ok) throw new Error('Export failed');
+            return response.blob();
+          })
+          .then(blob => {
+            const a = createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'PRD.md';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+            showStatus('✓ PRD exported successfully', 'success');
+          })
+          .catch(error => {
+            console.error('Export failed:', error);
+            showStatus('Export failed', 'error');
+          })
+          .finally(() => {
+            exportBtn.disabled = false;
+            exportBtn.textContent = 'Export PRD';
+          });
+      });
+
       const completeBtn = createElement('button', 'btn');
       completeBtn.textContent = 'Complete Requirements Phase';
       completeBtn.addEventListener('click', () => completePhase());
 
       actions.appendChild(regenerateBtn);
       actions.appendChild(downloadBtn);
+      actions.appendChild(exportBtn);
       actions.appendChild(completeBtn);
       header.appendChild(actions);
 
@@ -2987,12 +3087,25 @@ app.get('/planning', (c) => {
       downloadAllBtn.textContent = 'Download All';
       downloadAllBtn.addEventListener('click', () => downloadAllDocs(techSpec, adrs));
 
+      const exportAllBtn = createElement('button', 'btn btn-secondary');
+      exportAllBtn.textContent = 'Export All Documentation';
+      exportAllBtn.style.backgroundColor = 'rgba(34, 197, 94, 0.2)';
+      exportAllBtn.addEventListener('click', () => {
+        exportAllBtn.disabled = true;
+        exportAllBtn.textContent = 'Exporting...';
+        exportAllDocumentation().finally(() => {
+          exportAllBtn.disabled = false;
+          exportAllBtn.textContent = 'Export All Documentation';
+        });
+      });
+
       const completeBtn = createElement('button', 'btn');
       completeBtn.textContent = 'Complete Design Phase';
       completeBtn.addEventListener('click', () => completePhase());
 
       actions.appendChild(regenerateBtn);
       actions.appendChild(downloadAllBtn);
+      actions.appendChild(exportAllBtn);
       actions.appendChild(completeBtn);
       header.appendChild(actions);
 
@@ -3266,6 +3379,81 @@ app.get('/planning', (c) => {
       });
 
       showStatus('Downloading ' + (adrs.length + 1) + ' documents...', 'success');
+    }
+
+    async function exportAllDocumentation() {
+      try {
+        const files = [];
+
+        // Count total files
+        let totalFiles = 0;
+        if (requirementsFormData.generatedPRD) totalFiles++;
+        if (designFormData.generatedTechSpec) totalFiles++;
+        if (designFormData.generatedADRs) totalFiles += designFormData.generatedADRs.length;
+
+        if (totalFiles === 0) {
+          showStatus('No documents available to export', 'error');
+          return;
+        }
+
+        let exportedCount = 0;
+
+        // Helper function to download file from URL
+        function downloadFromUrl(url, filename) {
+          return new Promise((resolve, reject) => {
+            fetch(url)
+              .then(response => {
+                if (!response.ok) {
+                  reject(new Error('Failed to fetch ' + filename));
+                  return;
+                }
+                return response.blob();
+              })
+              .then(blob => {
+                const a = createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(a.href);
+                resolve();
+              })
+              .catch(reject);
+          });
+        }
+
+        // Export PRD if exists
+        if (requirementsFormData.generatedPRD) {
+          showStatus('Exporting documentation... (' + (exportedCount + 1) + ' of ' + totalFiles + ' files)', 'success');
+          await downloadFromUrl('/api/planning/export/prd', 'PRD.md');
+          exportedCount++;
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+
+        // Export Tech Spec if exists
+        if (designFormData.generatedTechSpec) {
+          showStatus('Exporting documentation... (' + (exportedCount + 1) + ' of ' + totalFiles + ' files)', 'success');
+          await downloadFromUrl('/api/planning/export/techspec', 'TechSpec.md');
+          exportedCount++;
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+
+        // Export ADRs if exist
+        if (designFormData.generatedADRs && designFormData.generatedADRs.length > 0) {
+          for (let i = 0; i < designFormData.generatedADRs.length; i++) {
+            showStatus('Exporting documentation... (' + (exportedCount + 1) + ' of ' + totalFiles + ' files)', 'success');
+            await downloadFromUrl('/api/planning/export/adr/' + i, 'ADR-' + (i + 1) + '.md');
+            exportedCount++;
+            await new Promise(resolve => setTimeout(resolve, 200));
+          }
+        }
+
+        showStatus('✓ Exported ' + exportedCount + ' documents successfully', 'success');
+      } catch (error) {
+        console.error('Export failed:', error);
+        showStatus('Export failed: ' + (error instanceof Error ? error.message : 'Unknown error'), 'error');
+      }
     }
 
     function downloadPRD(prdMarkdown) {
@@ -3966,6 +4154,167 @@ app.post('/api/planning/phase/:phaseId/complete', async (c) => {
       }, 400)
     }
 
+    return c.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, 500)
+  }
+})
+
+/**
+ * Export PRD with frontmatter
+ */
+app.get('/api/planning/export/prd', (c) => {
+  try {
+    const session = Array.from(planningSessions.values())[0]
+
+    if (!session) {
+      return c.json({
+        success: false,
+        error: 'No planning session found'
+      }, 404)
+    }
+
+    const prd = session.phaseData.requirements?.generatedPRD
+    const generatedAt = session.phaseData.requirements?.generatedAt
+
+    if (!prd || !generatedAt) {
+      return c.json({
+        success: false,
+        error: 'PRD not generated yet'
+      }, 404)
+    }
+
+    const prdWithFrontmatter = addFrontmatterToPRD(prd, {
+      projectName: session.projectName,
+      generatedAt: new Date(generatedAt)
+    })
+
+    // Sanitize filename: kebab-case, remove special chars
+    const filename = session.projectName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '') + '-PRD.md'
+
+    return c.text(prdWithFrontmatter, 200, {
+      'Content-Type': 'text/markdown; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${filename}"`
+    })
+  } catch (error) {
+    return c.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, 500)
+  }
+})
+
+/**
+ * Export Tech Spec with frontmatter
+ */
+app.get('/api/planning/export/techspec', (c) => {
+  try {
+    const session = Array.from(planningSessions.values())[0]
+
+    if (!session) {
+      return c.json({
+        success: false,
+        error: 'No planning session found'
+      }, 404)
+    }
+
+    const techSpec = session.phaseData.design?.generatedTechSpec
+    const generatedAt = session.phaseData.design?.techSpecGeneratedAt
+
+    if (!techSpec || !generatedAt) {
+      return c.json({
+        success: false,
+        error: 'Tech Spec not generated yet'
+      }, 404)
+    }
+
+    const techSpecWithFrontmatter = addFrontmatterToTechSpec(techSpec, {
+      projectName: session.projectName,
+      generatedAt: new Date(generatedAt)
+    })
+
+    // Sanitize filename: kebab-case, remove special chars
+    const filename = session.projectName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '') + '-TechSpec.md'
+
+    return c.text(techSpecWithFrontmatter, 200, {
+      'Content-Type': 'text/markdown; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${filename}"`
+    })
+  } catch (error) {
+    return c.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, 500)
+  }
+})
+
+/**
+ * Export specific ADR with frontmatter
+ */
+app.get('/api/planning/export/adr/:adrIndex', (c) => {
+  try {
+    const session = Array.from(planningSessions.values())[0]
+
+    if (!session) {
+      return c.json({
+        success: false,
+        error: 'No planning session found'
+      }, 404)
+    }
+
+    const adrIndexStr = c.req.param('adrIndex')
+    const adrIndex = parseInt(adrIndexStr, 10)
+
+    if (isNaN(adrIndex) || adrIndex < 0) {
+      return c.json({
+        success: false,
+        error: 'Invalid ADR index'
+      }, 400)
+    }
+
+    const adrs = session.phaseData.design?.generatedADRs
+
+    if (!adrs || adrs.length === 0) {
+      return c.json({
+        success: false,
+        error: 'No ADRs generated yet'
+      }, 404)
+    }
+
+    if (adrIndex >= adrs.length) {
+      return c.json({
+        success: false,
+        error: `ADR index ${adrIndex} out of range (0-${adrs.length - 1})`
+      }, 400)
+    }
+
+    const adr = adrs[adrIndex]
+    const adrWithFrontmatter = addFrontmatterToADR(adr, {
+      projectName: session.projectName,
+      adrIndex
+    })
+
+    // Sanitize filename: ADR-{number}-{title}.md
+    const adrNumber = adr.id.replace('ADR-', '')
+    const titleSlug = adr.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+
+    const filename = `ADR-${adrNumber}-${titleSlug}.md`
+
+    return c.text(adrWithFrontmatter, 200, {
+      'Content-Type': 'text/markdown; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${filename}"`
+    })
+  } catch (error) {
     return c.json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
