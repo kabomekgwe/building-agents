@@ -36,10 +36,11 @@ Plans:
 - Effective Q&A patterns for requirements elicitation
 - Claude API prompt engineering for document generation
 - Form validation and user input handling patterns
-**Plans**: TBD
+**Plans**: 2
 
 Plans:
-- [ ] TBD during phase planning
+- [x] 02-01-PLAN.md: Requirements form UI with validation and autosave (3 tasks) ✓
+- [ ] 02-02-PLAN.md: Claude API PRD generation and display (3 tasks, 1 checkpoint)
 
 ### Phase 3: Design Phase UI
 **Goal**: Implement technical specification and Architecture Decision Record (ADR) creation interface
@@ -78,7 +79,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. UI Foundation | 1/1 | ✓ Complete | 2025-12-28 |
-| 2. Requirements Phase UI | 0/TBD | Not started | - |
+| 2. Requirements Phase UI | 1/2 | In progress | - |
 | 3. Design Phase UI | 0/TBD | Not started | - |
 | 4. File Generation & Export | 0/TBD | Not started | - |
 | 5. Integration & Polish | 0/TBD | Not started | - |

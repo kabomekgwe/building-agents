@@ -624,6 +624,126 @@ app.get('/planning', (c) => {
       color: var(--error);
     }
 
+    .step-progress {
+      text-align: center;
+      margin-bottom: 2rem;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .step-container {
+      display: none;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    .step-container.active {
+      display: block;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .step-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      color: var(--text);
+    }
+
+    .char-count {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+      text-align: right;
+    }
+
+    .char-count.over-limit {
+      color: var(--error);
+    }
+
+    .field-error {
+      font-size: 0.875rem;
+      color: var(--error);
+      margin-top: 0.5rem;
+      display: none;
+    }
+
+    .field-error.visible {
+      display: block;
+    }
+
+    input.invalid, textarea.invalid {
+      border: 2px solid var(--error);
+    }
+
+    .list-field {
+      margin-bottom: 1.5rem;
+    }
+
+    .list-items {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .list-item {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .list-item input {
+      flex: 1;
+    }
+
+    .list-item-btn {
+      padding: 0.5rem 0.75rem;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      color: var(--text);
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 0.875rem;
+      min-width: 40px;
+    }
+
+    .list-item-btn:hover:not(:disabled) {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .list-item-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .list-item-btn.remove {
+      background: hsla(0, 84%, 60%, 0.15);
+      border-color: hsla(0, 84%, 60%, 0.3);
+    }
+
+    .list-item-btn.remove:hover:not(:disabled) {
+      background: var(--error);
+      border-color: var(--error);
+    }
+
+    .step-nav {
+      display: flex;
+      gap: 1rem;
+      justify-content: space-between;
+      margin-top: 2rem;
+    }
+
     @media (max-width: 768px) {
       .phase-stepper {
         grid-template-columns: 1fr;
@@ -711,6 +831,16 @@ app.get('/planning', (c) => {
   <script>
     const API_BASE = '/api/planning';
     let currentSession = null;
+    let currentStep = 1;
+    let requirementsFormData = {
+      projectName: '',
+      description: '',
+      problemStatement: '',
+      targetAudience: '',
+      features: [''],
+      successMetrics: [''],
+      outOfScope: []
+    };
 
     function createElement(tag, className, textContent) {
       const el = document.createElement(tag);
@@ -725,9 +855,39 @@ app.get('/planning', (c) => {
         title: 'Phase 1: Requirements Gathering',
         description: 'Define your project requirements and generate a comprehensive Product Requirements Document (PRD).',
         icon: '📋',
-        fields: [
-          { name: 'projectName', label: 'Project Name', type: 'text', placeholder: 'E-Commerce Checkout Feature', required: true },
-          { name: 'description', label: 'Project Description', type: 'textarea', placeholder: 'One-click checkout with Stripe integration...', required: true }
+        multiStep: true,
+        steps: [
+          {
+            stepNumber: 1,
+            stepTitle: 'Project Basics',
+            fields: [
+              { name: 'projectName', label: 'Project Name', type: 'text', placeholder: 'E-Commerce Checkout Feature', required: true, minLength: 3, maxLength: 100 },
+              { name: 'description', label: 'High-Level Description', type: 'textarea', placeholder: 'Describe what you\'re building in 2-3 sentences', required: true, minLength: 50, maxLength: 500 }
+            ]
+          },
+          {
+            stepNumber: 2,
+            stepTitle: 'Problem & Solution',
+            fields: [
+              { name: 'problemStatement', label: 'Problem Statement', type: 'textarea', placeholder: 'What problem are you solving? Who is affected?', required: true, minLength: 100, maxLength: 1000 },
+              { name: 'targetAudience', label: 'Target Audience', type: 'textarea', placeholder: 'Who will use this? Define your user personas', required: true, minLength: 50, maxLength: 500 }
+            ]
+          },
+          {
+            stepNumber: 3,
+            stepTitle: 'Features & Capabilities',
+            fields: [
+              { name: 'features', label: 'Key Features', type: 'list', placeholder: 'What specific capabilities will this provide?', required: true, minItems: 1, maxItems: 20 }
+            ]
+          },
+          {
+            stepNumber: 4,
+            stepTitle: 'Success & Scope',
+            fields: [
+              { name: 'successMetrics', label: 'Success Metrics', type: 'list', placeholder: 'How will you measure success? (e.g., "Users can complete signup in <60 seconds")', required: true, minItems: 1, maxItems: 10 },
+              { name: 'outOfScope', label: 'Out of Scope', type: 'list', placeholder: 'What should we explicitly NOT build in this version?', required: false, minItems: 0, maxItems: 10 }
+            ]
+          }
         ]
       },
       design: {
@@ -752,6 +912,9 @@ app.get('/planning', (c) => {
       }
     };
 
+    let autosaveTimer = null;
+    let formDirty = false;
+
     async function initSession() {
       try {
         const response = await fetch(API_BASE + '/state');
@@ -759,6 +922,7 @@ app.get('/planning', (c) => {
 
         if (data.success && data.data) {
           currentSession = data.data;
+          loadSavedRequirements();
           updateUI();
         } else {
           await createSession();
@@ -786,6 +950,87 @@ app.get('/planning', (c) => {
       } catch (error) {
         console.error('Failed to create session:', error);
       }
+    }
+
+    function loadSavedRequirements() {
+      if (currentSession?.phaseData?.requirements) {
+        const saved = currentSession.phaseData.requirements;
+        requirementsFormData = {
+          projectName: saved.projectName || '',
+          description: saved.description || '',
+          problemStatement: saved.problemStatement || '',
+          targetAudience: saved.targetAudience || '',
+          features: saved.features || [''],
+          successMetrics: saved.successMetrics || [''],
+          outOfScope: saved.outOfScope || []
+        };
+      }
+    }
+
+    function markFormDirty() {
+      formDirty = true;
+      if (!autosaveTimer) {
+        autosaveTimer = setTimeout(autosave, 30000);
+      }
+    }
+
+    async function autosave() {
+      if (!formDirty) return;
+
+      const validItems = (arr) => arr.filter(item => item.trim().length > 0);
+
+      const hasMinimumData = requirementsFormData.projectName.length >= 3 &&
+                             requirementsFormData.description.length >= 50;
+
+      if (!hasMinimumData) {
+        formDirty = false;
+        autosaveTimer = null;
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/planning/requirements/autosave', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectName: requirementsFormData.projectName,
+            description: requirementsFormData.description,
+            problemStatement: requirementsFormData.problemStatement,
+            targetAudience: requirementsFormData.targetAudience,
+            features: validItems(requirementsFormData.features),
+            successMetrics: validItems(requirementsFormData.successMetrics),
+            outOfScope: validItems(requirementsFormData.outOfScope)
+          })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          formDirty = false;
+          showAutosaveIndicator('Saved');
+        }
+      } catch (error) {
+        console.error('Autosave failed:', error);
+      }
+
+      autosaveTimer = null;
+    }
+
+    function showAutosaveIndicator(message) {
+      const indicator = document.getElementById('autosaveIndicator');
+      if (!indicator) {
+        const newIndicator = createElement('div');
+        newIndicator.id = 'autosaveIndicator';
+        newIndicator.style.cssText = 'position: fixed; top: 20px; right: 20px; background: hsla(145, 80%, 45%, 0.15); border: 1px solid hsla(145, 80%, 45%, 0.3); color: var(--success); padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.875rem; z-index: 1000; opacity: 0; transition: opacity 0.3s;';
+        document.body.appendChild(newIndicator);
+      }
+
+      const ind = document.getElementById('autosaveIndicator');
+      ind.textContent = message + ' ✓';
+      ind.style.opacity = '1';
+
+      setTimeout(() => {
+        ind.style.opacity = '0';
+      }, 2000);
     }
 
     function updateUI() {
@@ -823,6 +1068,14 @@ app.get('/planning', (c) => {
 
       formContainer.textContent = '';
 
+      if (phase.multiStep) {
+        renderMultiStepForm(phase, formContainer);
+      } else {
+        renderStandardForm(phase, formContainer, phaseId);
+      }
+    }
+
+    function renderStandardForm(phase, formContainer, phaseId) {
       phase.fields.forEach(field => {
         const value = currentSession?.phaseData[phaseId]?.[field.name] || '';
 
@@ -855,6 +1108,311 @@ app.get('/planning', (c) => {
       });
 
       checkFormValidity();
+    }
+
+    function renderMultiStepForm(phase, formContainer) {
+      const progress = createElement('div', 'step-progress');
+      progress.textContent = 'Step ' + currentStep + ' of ' + phase.steps.length;
+      formContainer.appendChild(progress);
+
+      phase.steps.forEach((step, index) => {
+        const stepContainer = createElement('div', 'step-container');
+        stepContainer.id = 'step-' + step.stepNumber;
+        if (step.stepNumber === currentStep) {
+          stepContainer.classList.add('active');
+        }
+
+        const stepTitle = createElement('h3', 'step-title');
+        stepTitle.textContent = step.stepTitle;
+        stepContainer.appendChild(stepTitle);
+
+        step.fields.forEach(field => {
+          renderField(field, stepContainer);
+        });
+
+        formContainer.appendChild(stepContainer);
+      });
+
+      const navContainer = createElement('div', 'step-nav');
+
+      const backBtn = createElement('button', 'btn btn-secondary');
+      backBtn.type = 'button';
+      backBtn.textContent = 'Back';
+      backBtn.id = 'stepBackBtn';
+      backBtn.disabled = currentStep === 1;
+      backBtn.addEventListener('click', goToPreviousStep);
+
+      const continueBtn = createElement('button', 'btn');
+      continueBtn.type = 'button';
+      continueBtn.id = 'stepContinueBtn';
+      continueBtn.textContent = currentStep === phase.steps.length ? 'Generate PRD' : 'Continue';
+      continueBtn.addEventListener('click', goToNextStep);
+
+      navContainer.appendChild(backBtn);
+      navContainer.appendChild(continueBtn);
+      formContainer.appendChild(navContainer);
+
+      validateCurrentStep();
+    }
+
+    function renderField(field, container) {
+      if (field.type === 'list') {
+        renderListField(field, container);
+      } else {
+        renderTextFieldWithValidation(field, container);
+      }
+    }
+
+    function renderTextFieldWithValidation(field, container) {
+      const inputGroup = createElement('div', 'input-group');
+
+      const label = createElement('label');
+      label.setAttribute('for', field.name);
+      label.textContent = field.label + (field.required ? ' *' : '');
+
+      let input;
+      if (field.type === 'textarea') {
+        input = createElement('textarea');
+        input.rows = 4;
+      } else {
+        input = createElement('input');
+        input.type = field.type;
+      }
+
+      input.id = field.name;
+      input.name = field.name;
+      input.placeholder = field.placeholder;
+      input.value = requirementsFormData[field.name] || '';
+      if (field.required) input.required = true;
+
+      input.addEventListener('input', (e) => {
+        requirementsFormData[field.name] = e.target.value;
+        updateCharCount(field, input);
+        validateCurrentStep();
+        markFormDirty();
+      });
+
+      input.addEventListener('blur', () => {
+        validateField(field, input);
+      });
+
+      inputGroup.appendChild(label);
+      inputGroup.appendChild(input);
+
+      if (field.minLength || field.maxLength) {
+        const charCount = createElement('div', 'char-count');
+        charCount.id = field.name + '-count';
+        inputGroup.appendChild(charCount);
+        updateCharCount(field, input);
+      }
+
+      const errorMsg = createElement('div', 'field-error');
+      errorMsg.id = field.name + '-error';
+      inputGroup.appendChild(errorMsg);
+
+      container.appendChild(inputGroup);
+    }
+
+    function renderListField(field, container) {
+      const listField = createElement('div', 'list-field');
+
+      const label = createElement('label');
+      label.textContent = field.label + (field.required ? ' *' : '');
+      listField.appendChild(label);
+
+      const listItems = createElement('div', 'list-items');
+      listItems.id = field.name + '-list';
+      listField.appendChild(listItems);
+
+      const errorMsg = createElement('div', 'field-error');
+      errorMsg.id = field.name + '-error';
+      listField.appendChild(errorMsg);
+
+      container.appendChild(listField);
+
+      renderListItems(field);
+    }
+
+    function renderListItems(field) {
+      const listItems = document.getElementById(field.name + '-list');
+      listItems.textContent = '';
+
+      const items = requirementsFormData[field.name] || [''];
+
+      items.forEach((item, index) => {
+        const listItem = createElement('div', 'list-item');
+
+        const input = createElement('input');
+        input.type = 'text';
+        input.placeholder = field.placeholder;
+        input.value = item;
+        input.addEventListener('input', (e) => {
+          requirementsFormData[field.name][index] = e.target.value;
+          validateCurrentStep();
+          markFormDirty();
+        });
+
+        const addBtn = createElement('button', 'list-item-btn');
+        addBtn.type = 'button';
+        addBtn.textContent = '+';
+        addBtn.addEventListener('click', () => {
+          requirementsFormData[field.name].push('');
+          renderListItems(field);
+          validateCurrentStep();
+        });
+
+        const removeBtn = createElement('button', 'list-item-btn remove');
+        removeBtn.type = 'button';
+        removeBtn.textContent = '×';
+        removeBtn.disabled = items.length === 1 && field.required;
+        removeBtn.addEventListener('click', () => {
+          requirementsFormData[field.name].splice(index, 1);
+          renderListItems(field);
+          validateCurrentStep();
+        });
+
+        listItem.appendChild(input);
+        if (index === items.length - 1) {
+          listItem.appendChild(addBtn);
+        }
+        if (items.length > 1 || !field.required) {
+          listItem.appendChild(removeBtn);
+        }
+
+        listItems.appendChild(listItem);
+      });
+    }
+
+    function updateCharCount(field, input) {
+      const countEl = document.getElementById(field.name + '-count');
+      if (countEl) {
+        const length = input.value.length;
+        const max = field.maxLength || 0;
+        countEl.textContent = length + (max ? ' / ' + max + ' characters' : ' characters');
+        if (max && length > max) {
+          countEl.classList.add('over-limit');
+        } else {
+          countEl.classList.remove('over-limit');
+        }
+      }
+    }
+
+    function validateField(field, input) {
+      const errorEl = document.getElementById(field.name + '-error');
+      const value = input.value.trim();
+
+      let error = '';
+
+      if (field.required && !value) {
+        error = field.label + ' is required';
+      } else if (field.minLength && value.length < field.minLength) {
+        error = field.label + ' must be at least ' + field.minLength + ' characters';
+      } else if (field.maxLength && value.length > field.maxLength) {
+        error = field.label + ' must not exceed ' + field.maxLength + ' characters';
+      }
+
+      if (error) {
+        input.classList.add('invalid');
+        errorEl.textContent = error;
+        errorEl.classList.add('visible');
+        return false;
+      } else {
+        input.classList.remove('invalid');
+        errorEl.classList.remove('visible');
+        return true;
+      }
+    }
+
+    function validateCurrentStep() {
+      const phase = phases.requirements;
+      const step = phase.steps[currentStep - 1];
+      const continueBtn = document.getElementById('stepContinueBtn');
+
+      if (!continueBtn) return;
+
+      let allValid = true;
+
+      step.fields.forEach(field => {
+        if (field.type === 'list') {
+          const items = requirementsFormData[field.name] || [];
+          const validItems = items.filter(item => item.trim().length > 0);
+
+          const errorEl = document.getElementById(field.name + '-error');
+          if (field.required && validItems.length < (field.minItems || 1)) {
+            allValid = false;
+            if (errorEl) {
+              errorEl.textContent = 'Please add at least ' + (field.minItems || 1) + ' item(s)';
+              errorEl.classList.add('visible');
+            }
+          } else {
+            if (errorEl) {
+              errorEl.classList.remove('visible');
+            }
+          }
+        } else {
+          const value = requirementsFormData[field.name] || '';
+          if (field.required && value.trim().length < (field.minLength || 1)) {
+            allValid = false;
+          }
+        }
+      });
+
+      continueBtn.disabled = !allValid;
+    }
+
+    function goToPreviousStep() {
+      if (currentStep > 1) {
+        if (formDirty) {
+          autosave();
+        }
+
+        document.getElementById('step-' + currentStep).classList.remove('active');
+        currentStep--;
+        document.getElementById('step-' + currentStep).classList.add('active');
+
+        const progress = document.querySelector('.step-progress');
+        progress.textContent = 'Step ' + currentStep + ' of ' + phases.requirements.steps.length;
+
+        const backBtn = document.getElementById('stepBackBtn');
+        backBtn.disabled = currentStep === 1;
+
+        const continueBtn = document.getElementById('stepContinueBtn');
+        continueBtn.textContent = currentStep === phases.requirements.steps.length ? 'Generate PRD' : 'Continue';
+
+        validateCurrentStep();
+      }
+    }
+
+    function goToNextStep() {
+      const phase = phases.requirements;
+
+      if (currentStep < phase.steps.length) {
+        if (formDirty) {
+          autosave();
+        }
+
+        document.getElementById('step-' + currentStep).classList.remove('active');
+        currentStep++;
+        document.getElementById('step-' + currentStep).classList.add('active');
+
+        const progress = document.querySelector('.step-progress');
+        progress.textContent = 'Step ' + currentStep + ' of ' + phase.steps.length;
+
+        const backBtn = document.getElementById('stepBackBtn');
+        backBtn.disabled = currentStep === 1;
+
+        const continueBtn = document.getElementById('stepContinueBtn');
+        continueBtn.textContent = currentStep === phase.steps.length ? 'Generate PRD' : 'Continue';
+
+        validateCurrentStep();
+      } else {
+        handleGeneratePRD();
+      }
+    }
+
+    function handleGeneratePRD() {
+      showStatus('Generating PRD... (will be implemented in next plan)', 'success');
+      console.log('Requirements form data:', requirementsFormData);
     }
 
     function checkFormValidity() {
@@ -1002,6 +1560,73 @@ app.get('/api/planning/state', (c) => {
       data: session
     })
   } catch (error) {
+    return c.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, 500)
+  }
+})
+
+/**
+ * Autosave requirements form data
+ */
+const AutosaveRequirementsSchema = z.object({
+  projectName: z.string().min(3).max(100),
+  description: z.string().min(50).max(500),
+  problemStatement: z.string().min(100).max(1000),
+  targetAudience: z.string().min(50).max(500),
+  features: z.array(z.string()).min(1).max(20),
+  successMetrics: z.array(z.string()).min(1).max(10),
+  outOfScope: z.array(z.string()).max(10).optional().default([])
+})
+
+app.post('/api/planning/requirements/autosave', async (c) => {
+  try {
+    const session = Array.from(planningSessions.values())[0]
+
+    if (!session) {
+      return c.json({
+        success: false,
+        error: 'No active planning session'
+      }, 404)
+    }
+
+    const body = await c.req.json()
+    const validated = AutosaveRequirementsSchema.parse(body)
+
+    if (!session.phaseData.requirements) {
+      session.phaseData.requirements = {
+        projectName: '',
+        description: '',
+        problemStatement: '',
+        targetAudience: '',
+        features: [],
+        successMetrics: [],
+        outOfScope: []
+      }
+    }
+
+    Object.assign(session.phaseData.requirements, validated)
+    session.phaseData.requirements.lastSaved = new Date()
+    session.updatedAt = new Date()
+
+    planningSessions.set(session.id, session)
+
+    return c.json({
+      success: true,
+      data: {
+        lastSaved: session.phaseData.requirements.lastSaved
+      }
+    })
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return c.json({
+        success: false,
+        error: 'Validation failed',
+        details: error.errors
+      }, 400)
+    }
+
     return c.json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'

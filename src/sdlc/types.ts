@@ -581,6 +581,17 @@ export interface QualityGateTemplate {
 // PLANNING SESSION TYPES
 // ========================================
 
+export interface RequirementsFormData {
+  projectName: string
+  description: string
+  problemStatement: string
+  targetAudience: string
+  features: string[]
+  successMetrics: string[]
+  outOfScope: string[]
+  lastSaved?: Date
+}
+
 export interface PlanningSession {
   id: string
   projectName: string
@@ -588,7 +599,7 @@ export interface PlanningSession {
   currentPhase: 'requirements' | 'design' | 'implementation'
   completedPhases: string[]
   phaseData: {
-    requirements?: any
+    requirements?: RequirementsFormData
     design?: any
     implementation?: any
   }
