@@ -648,6 +648,7 @@ export interface PlanningSession {
   }
   createdAt: Date
   updatedAt: Date
+  implementationProjectId?: string  // Link to SDLC orchestrator project
 }
 
 export interface PlanningPhaseDefinition {

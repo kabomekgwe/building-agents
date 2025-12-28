@@ -819,6 +819,88 @@ app.get('/planning', (c) => {
       }
     }
 
+    @keyframes slideUp {
+      from {
+        transform: translateY(30px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+      }
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes fadeOut {
+      from {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      to {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 0.5rem;
+      vertical-align: middle;
+    }
+
+    .spinner-large {
+      width: 40px;
+      height: 40px;
+      border-width: 4px;
+    }
+
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      z-index: 100;
+      border-radius: 12px;
+    }
+
+    .loading-message {
+      color: white;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+
     .header {
       text-align: center;
       margin-bottom: 3rem;
@@ -1373,6 +1455,306 @@ app.get('/planning', (c) => {
         width: 100%;
       }
     }
+
+    /* Progress Visualization */
+    .progress-container {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 1rem 0 2rem 0;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+      border-radius: 4px;
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-left: 0.5rem;
+      border: 1px solid;
+    }
+
+    .badge-complete {
+      background: rgba(34, 197, 94, 0.2);
+      border-color: rgba(34, 197, 94, 0.4);
+      color: rgb(74, 222, 128);
+    }
+
+    .badge-in-progress {
+      background: rgba(59, 130, 246, 0.2);
+      border-color: rgba(59, 130, 246, 0.4);
+      color: rgb(96, 165, 250);
+    }
+
+    .badge-locked {
+      background: rgba(107, 114, 128, 0.2);
+      border-color: rgba(107, 114, 128, 0.4);
+      color: rgb(156, 163, 175);
+    }
+
+    .phase-badges {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin: 1.5rem 0;
+      flex-wrap: wrap;
+    }
+
+    .phase-badge-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .phase-badge-item .checkmark {
+      color: var(--success);
+      font-weight: bold;
+    }
+
+    .phase-badge-item .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* Help Icons and Tooltips */
+    .help-icon {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(99, 102, 241, 0.2);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      color: rgba(99, 102, 241, 0.9);
+      text-align: center;
+      line-height: 18px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: help;
+      margin-left: 0.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .help-icon:hover {
+      background: rgba(99, 102, 241, 0.3);
+      transform: scale(1.1);
+    }
+
+    [title] {
+      position: relative;
+    }
+
+    .tooltip {
+      position: relative;
+      display: inline-block;
+      border-bottom: 1px dotted rgba(99, 102, 241, 0.6);
+      cursor: help;
+    }
+
+    .tooltip:hover {
+      border-bottom-color: rgba(99, 102, 241, 1);
+    }
+
+    /* Help Panel */
+    .help-panel {
+      position: fixed;
+      right: -400px;
+      top: 0;
+      height: 100vh;
+      width: 380px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-left: 1px solid var(--glass-border);
+      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.3);
+      transition: right 0.3s ease-in-out;
+      z-index: 9999;
+      overflow-y: auto;
+      padding: 2rem;
+    }
+
+    .help-panel.open {
+      right: 0;
+    }
+
+    .help-toggle-btn {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+      transition: all 0.3s ease;
+      z-index: 9998;
+    }
+
+    .help-toggle-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 16px rgba(99, 102, 241, 0.6);
+    }
+
+    .help-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .help-section h3 {
+      font-size: 1.1rem;
+      margin-bottom: 0.75rem;
+      color: var(--primary);
+    }
+
+    .help-section p {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 0.5rem;
+    }
+
+    .help-section ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .help-section li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.9rem;
+    }
+
+    .help-section li:last-child {
+      border-bottom: none;
+    }
+
+    /* Enhanced Button Animations */
+    .btn {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    .btn:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    .btn-success {
+      animation: pulse 0.6s ease-in-out;
+    }
+
+    /* Status Message Improvements */
+    .status-message {
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      animation: slideUp 0.3s ease-out;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .status-message.success {
+      background: rgba(34, 197, 94, 0.2);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      color: rgb(74, 222, 128);
+    }
+
+    .status-message.error {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: rgb(248, 113, 113);
+    }
+
+    .status-message.info {
+      background: rgba(59, 130, 246, 0.2);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      color: rgb(96, 165, 250);
+    }
+
+    .status-message .icon {
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .status-message .close-btn {
+      margin-left: auto;
+      background: none;
+      border: none;
+      color: currentColor;
+      opacity: 0.6;
+      cursor: pointer;
+      font-size: 1.5rem;
+      padding: 0;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.2s;
+    }
+
+    .status-message .close-btn:hover {
+      opacity: 1;
+    }
+
+    /* Phase completion animation */
+    .phase-step.completed .phase-icon {
+      animation: pulse 0.5s ease-in-out;
+    }
+
+    /* Smooth transitions for form elements */
+    input, textarea, select {
+      transition: all 0.2s ease;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      transform: scale(1.01);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
   </style>
 </head>
 <body>
@@ -1380,7 +1762,76 @@ app.get('/planning', (c) => {
     <div class="header">
       <h1>Documentation-First Planning</h1>
       <p>Guided SDLC workflow with hard gates enforcing documentation quality</p>
+
+      <!-- Progress Bar -->
+      <div class="progress-container">
+        <div class="progress-bar" id="overallProgress" style="width: 0%"></div>
+      </div>
+
+      <!-- Phase Status Badges -->
+      <div class="phase-badges" id="phaseBadges">
+        <div class="phase-badge-item">
+          <span class="dot" style="color: #9CA3AF;"></span>
+          <span>Requirements</span>
+          <span class="help-icon" title="Define what you're building with a Product Requirements Document (PRD). Includes project description, features, success metrics, and scope.">ⓘ</span>
+          <span class="badge badge-locked" id="badge-requirements">Locked</span>
+        </div>
+        <div class="phase-badge-item">
+          <span class="dot" style="color: #9CA3AF;"></span>
+          <span>Design</span>
+          <span class="help-icon" title="Create technical specifications and Architecture Decision Records (ADRs). Define system architecture, components, database schema, and key technical decisions.">ⓘ</span>
+          <span class="badge badge-locked" id="badge-design">Locked</span>
+        </div>
+      </div>
     </div>
+
+    <!-- Help Panel -->
+    <div class="help-panel" id="helpPanel">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2 style="margin: 0;">Help & FAQ</h2>
+        <button onclick="toggleHelpPanel()" style="background: none; border: none; color: rgba(255, 255, 255, 0.6); font-size: 1.5rem; cursor: pointer;">×</button>
+      </div>
+
+      <div class="help-section">
+        <h3>📋 Workflow Overview</h3>
+        <p>This tool enforces a documentation-first approach to software development:</p>
+        <ul>
+          <li><strong>1. Requirements</strong> - Define the problem and solution</li>
+          <li><strong>2. Design</strong> - Plan the technical implementation</li>
+          <li><strong>3. Export</strong> - Download documentation for Claude Code CLI</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>💡 Key Concepts</h3>
+        <p><strong class="tooltip" title="Product Requirements Document">PRD</strong>: A Product Requirements Document defines what you're building and why.</p>
+        <p><strong class="tooltip" title="Technical Specification">Tech Spec</strong>: Technical specification detailing system architecture, components, and data models.</p>
+        <p><strong class="tooltip" title="Architecture Decision Record">ADR</strong>: Architecture Decision Records document important technical decisions and their rationale.</p>
+      </div>
+
+      <div class="help-section">
+        <h3>🔒 Hard Gates</h3>
+        <p>You cannot skip phases. Each phase must be completed before moving to the next.</p>
+        <p>This ensures thorough planning before implementation begins.</p>
+      </div>
+
+      <div class="help-section">
+        <h3>💾 Auto-Save</h3>
+        <p>Your progress is automatically saved to the server and localStorage every 30 seconds.</p>
+        <p>You can safely refresh the page and resume where you left off.</p>
+      </div>
+
+      <div class="help-section">
+        <h3>📥 Export</h3>
+        <p>After completing all phases, you can export documentation as markdown files with YAML frontmatter.</p>
+        <p>These files are compatible with Claude Code CLI workflows.</p>
+      </div>
+    </div>
+
+    <!-- Help Toggle Button -->
+    <button class="help-toggle-btn" onclick="toggleHelpPanel()" title="Help & FAQ">?</button>
+
+    <div class="container" style="margin-top: 0;">
 
     <div class="card">
       <div class="phase-stepper">
@@ -1469,6 +1920,298 @@ app.get('/planning', (c) => {
       if (className) el.className = className;
       if (textContent) el.textContent = textContent;
       return el;
+    }
+
+    // Session Persistence Functions
+    function saveSessionToLocalStorage() {
+      if (!currentSession) return;
+
+      const sessionData = {
+        sessionId: currentSession.id,
+        projectName: currentSession.projectName,
+        currentPhase: currentSession.currentPhase,
+        completedPhases: currentSession.completedPhases,
+        requirementsFormData: requirementsFormData,
+        designFormData: designFormData,
+        savedAt: new Date().toISOString()
+      };
+
+      try {
+        localStorage.setItem('planning-session-' + currentSession.id, JSON.stringify(sessionData));
+      } catch (error) {
+        console.error('Failed to save session to localStorage:', error);
+      }
+    }
+
+    function loadSessionFromStorage() {
+      // Check if there's a saved session
+      const keys = Object.keys(localStorage).filter(key => key.startsWith('planning-session-'));
+
+      if (keys.length === 0) {
+        return null;
+      }
+
+      // Get the most recent session
+      const sessionKey = keys[0];
+      const sessionData = localStorage.getItem(sessionKey);
+
+      if (!sessionData) {
+        return null;
+      }
+
+      try {
+        return JSON.parse(sessionData);
+      } catch (error) {
+        console.error('Failed to parse saved session:', error);
+        return null;
+      }
+    }
+
+    function showResumeSessionModal(savedSession) {
+      const overlay = createElement('div');
+      overlay.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); z-index: 9999; display: flex; align-items: center; justify-content: center;';
+
+      const modal = createElement('div', 'glass-card');
+      modal.style.cssText = 'max-width: 500px; padding: 2rem; text-align: center;';
+
+      const title = createElement('h2');
+      title.textContent = 'Resume Planning Session?';
+      title.style.marginBottom = '1rem';
+      modal.appendChild(title);
+
+      const message = createElement('p');
+      message.textContent = 'You have an existing planning session for "' + savedSession.projectName + '". Would you like to resume it?';
+      message.style.marginBottom = '1.5rem';
+      message.style.color = 'rgba(255, 255, 255, 0.8)';
+      modal.appendChild(message);
+
+      const savedAt = new Date(savedSession.savedAt);
+      const timeAgo = createElement('p');
+      timeAgo.textContent = 'Last saved: ' + savedAt.toLocaleString();
+      timeAgo.style.fontSize = '0.9rem';
+      timeAgo.style.color = 'rgba(255, 255, 255, 0.6)';
+      timeAgo.style.marginBottom = '1.5rem';
+      modal.appendChild(timeAgo);
+
+      const buttonContainer = createElement('div');
+      buttonContainer.style.cssText = 'display: flex; gap: 1rem; justify-content: center;';
+
+      const resumeBtn = createElement('button', 'btn');
+      resumeBtn.textContent = 'Resume Session';
+      resumeBtn.addEventListener('click', () => {
+        restoreSession(savedSession);
+        document.body.removeChild(overlay);
+      });
+
+      const startNewBtn = createElement('button', 'btn btn-secondary');
+      startNewBtn.textContent = 'Start New Session';
+      startNewBtn.addEventListener('click', () => {
+        clearLocalStorage();
+        document.body.removeChild(overlay);
+        initSession();
+      });
+
+      buttonContainer.appendChild(resumeBtn);
+      buttonContainer.appendChild(startNewBtn);
+      modal.appendChild(buttonContainer);
+
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+    }
+
+    function restoreSession(savedSession) {
+      // Restore form data
+      requirementsFormData = savedSession.requirementsFormData || requirementsFormData;
+      designFormData = savedSession.designFormData || designFormData;
+
+      // Recreate session on server
+      fetch('/api/planning/resume-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: savedSession.sessionId,
+          projectName: savedSession.projectName,
+          currentPhase: savedSession.currentPhase,
+          completedPhases: savedSession.completedPhases,
+          requirementsData: savedSession.requirementsFormData,
+          designData: savedSession.designFormData
+        })
+      })
+      .then(response => response.json())
+      .then(result => {
+        if (result.success) {
+          currentSession = result.data.session;
+          updateUI();
+          updateProgressVisualization();
+          showStatus('Session resumed successfully', 'success');
+        } else {
+          showStatus('Failed to resume session. Starting fresh.', 'error');
+          initSession();
+        }
+      })
+      .catch(error => {
+        console.error('Failed to resume session:', error);
+        showStatus('Failed to resume session. Starting fresh.', 'error');
+        initSession();
+      });
+    }
+
+    function clearLocalStorage() {
+      const keys = Object.keys(localStorage).filter(key => key.startsWith('planning-session-'));
+      keys.forEach(key => localStorage.removeItem(key));
+    }
+
+    // Onboarding and Help Functions
+    function toggleHelpPanel() {
+      const panel = document.getElementById('helpPanel');
+      if (panel) {
+        panel.classList.toggle('open');
+      }
+    }
+
+    function showOnboardingModal() {
+      // Check if user has seen onboarding
+      if (localStorage.getItem('planning-onboarding-seen')) {
+        return;
+      }
+
+      const overlay = createElement('div');
+      overlay.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); z-index: 10000; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.3s ease-in;';
+
+      const modal = createElement('div', 'glass-card');
+      modal.style.cssText = 'max-width: 600px; padding: 2.5rem; animation: slideUp 0.3s ease-out;';
+
+      const title = createElement('h2');
+      title.textContent = '📋 Welcome to Documentation-First Planning';
+      title.style.marginBottom = '1rem';
+      title.style.fontSize = '1.75rem';
+      modal.appendChild(title);
+
+      const intro = createElement('p');
+      intro.textContent = 'This tool enforces professional planning workflows before code implementation.';
+      intro.style.marginBottom = '1.5rem';
+      intro.style.color = 'rgba(255, 255, 255, 0.9)';
+      modal.appendChild(intro);
+
+      const phasesList = createElement('div');
+      phasesList.style.marginBottom = '1.5rem';
+
+      const phases = [
+        { icon: '📝', name: 'Requirements Phase', desc: 'Define what you\'re building with a Product Requirements Document (PRD)' },
+        { icon: '🏗️', name: 'Design Phase', desc: 'Create technical specifications and Architecture Decision Records (ADRs)' },
+        { icon: '✅', name: 'Export', desc: 'Download all documentation as markdown files compatible with Claude Code CLI' }
+      ];
+
+      phases.forEach(phase => {
+        const phaseItem = createElement('div');
+        phaseItem.style.cssText = 'display: flex; gap: 1rem; margin-bottom: 1rem; padding: 1rem; background: rgba(255, 255, 255, 0.05); border-radius: 8px;';
+
+        const icon = createElement('div');
+        icon.textContent = phase.icon;
+        icon.style.fontSize = '1.5rem';
+        phaseItem.appendChild(icon);
+
+        const textDiv = createElement('div');
+        const phaseName = createElement('div');
+        phaseName.textContent = phase.name;
+        phaseName.style.fontWeight = 'bold';
+        phaseName.style.marginBottom = '0.25rem';
+        textDiv.appendChild(phaseName);
+
+        const phaseDesc = createElement('div');
+        phaseDesc.textContent = phase.desc;
+        phaseDesc.style.fontSize = '0.9rem';
+        phaseDesc.style.color = 'rgba(255, 255, 255, 0.7)';
+        textDiv.appendChild(phaseDesc);
+
+        phaseItem.appendChild(textDiv);
+        phasesList.appendChild(phaseItem);
+      });
+
+      modal.appendChild(phasesList);
+
+      const note = createElement('p');
+      note.textContent = '💡 Tip: You cannot skip phases. Complete each step to unlock the next.';
+      note.style.fontSize = '0.9rem';
+      note.style.color = 'rgba(99, 102, 241, 0.9)';
+      note.style.marginBottom = '1.5rem';
+      note.style.padding = '0.75rem';
+      note.style.background = 'rgba(99, 102, 241, 0.1)';
+      note.style.borderRadius = '6px';
+      note.style.borderLeft = '3px solid rgba(99, 102, 241, 0.5)';
+      modal.appendChild(note);
+
+      const getStartedBtn = createElement('button', 'btn');
+      getStartedBtn.textContent = 'Get Started';
+      getStartedBtn.style.width = '100%';
+      getStartedBtn.addEventListener('click', () => {
+        localStorage.setItem('planning-onboarding-seen', 'true');
+        document.body.removeChild(overlay);
+      });
+
+      modal.appendChild(getStartedBtn);
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+    }
+
+    function updateProgressVisualization() {
+      if (!currentSession) return;
+
+      const requirementsComplete = currentSession.completedPhases.includes('requirements');
+      const designComplete = currentSession.completedPhases.includes('design');
+      const prdGenerated = requirementsFormData.generatedPRD;
+      const techSpecGenerated = designFormData.generatedTechSpec;
+      const adrsGenerated = designFormData.generatedADRs && designFormData.generatedADRs.length > 0;
+
+      // Calculate overall progress
+      let progress = 0;
+      if (requirementsComplete) progress = 33;
+      if (designComplete) progress = 67;
+      if (requirementsComplete && designComplete && prdGenerated && techSpecGenerated && adrsGenerated) progress = 100;
+
+      // Update progress bar
+      const progressBar = document.getElementById('overallProgress');
+      if (progressBar) {
+        progressBar.style.width = progress + '%';
+      }
+
+      // Update Requirements badge
+      const reqBadge = document.getElementById('badge-requirements');
+      const reqDot = document.querySelector('.phase-badge-item:first-child .dot');
+      if (reqBadge) {
+        if (requirementsComplete) {
+          reqBadge.textContent = '✓ Complete';
+          reqBadge.className = 'badge badge-complete';
+          if (reqDot) reqDot.style.color = '#4ade80';
+        } else if (currentSession.currentPhase === 'requirements') {
+          reqBadge.textContent = 'In Progress';
+          reqBadge.className = 'badge badge-in-progress';
+          if (reqDot) reqDot.style.color = '#60a5fa';
+        } else {
+          reqBadge.textContent = 'Locked';
+          reqBadge.className = 'badge badge-locked';
+          if (reqDot) reqDot.style.color = '#9CA3AF';
+        }
+      }
+
+      // Update Design badge
+      const designBadge = document.getElementById('badge-design');
+      const designDot = document.querySelector('.phase-badge-item:nth-child(2) .dot');
+      if (designBadge) {
+        if (designComplete) {
+          designBadge.textContent = '✓ Complete';
+          designBadge.className = 'badge badge-complete';
+          if (designDot) designDot.style.color = '#4ade80';
+        } else if (currentSession.currentPhase === 'design') {
+          designBadge.textContent = 'In Progress';
+          designBadge.className = 'badge badge-in-progress';
+          if (designDot) designDot.style.color = '#60a5fa';
+        } else {
+          designBadge.textContent = 'Locked';
+          designBadge.className = 'badge badge-locked';
+          if (designDot) designDot.style.color = '#9CA3AF';
+        }
+      }
     }
 
     const phases = {
@@ -1678,6 +2421,8 @@ app.get('/planning', (c) => {
         if (result.success) {
           formDirty = false;
           showAutosaveIndicator('Saved');
+          // Save to localStorage as well
+          saveSessionToLocalStorage();
         }
       } catch (error) {
         console.error('Autosave failed:', error);
@@ -1738,6 +2483,8 @@ app.get('/planning', (c) => {
         if (result.success) {
           designFormDirty = false;
           showAutosaveIndicator('Saved');
+          // Save to localStorage as well
+          saveSessionToLocalStorage();
         }
       } catch (error) {
         console.error('Design autosave failed:', error);
@@ -1774,6 +2521,9 @@ app.get('/planning', (c) => {
       });
 
       renderPhaseForm(currentPhase);
+
+      // Update progress visualization
+      updateProgressVisualization();
 
       const continueBtn = document.getElementById('continueBtn');
       continueBtn.disabled = true;
@@ -2906,7 +3656,11 @@ app.get('/planning', (c) => {
         const result = await response.json();
 
         if (result.success) {
+          // Store PRD in form data for progress tracking
+          requirementsFormData.generatedPRD = result.data.prd;
           displayPRD(result.data.prd);
+          // Update progress visualization
+          updateProgressVisualization();
         } else {
           showStatus(result.error || 'Failed to generate PRD', 'error');
           continueBtn.disabled = false;
@@ -2970,8 +3724,15 @@ app.get('/planning', (c) => {
           }
         }
 
+        // Store Tech Spec and ADRs in form data for progress tracking
+        designFormData.generatedTechSpec = techSpec;
+        designFormData.generatedADRs = generatedADRs;
+
         // Display results
         displayTechSpecAndADRs(techSpec, generatedADRs);
+
+        // Update progress visualization
+        updateProgressVisualization();
 
       } catch (error) {
         console.error('Tech Spec/ADR generation failed:', error);
@@ -3099,6 +3860,65 @@ app.get('/planning', (c) => {
         });
       });
 
+      const createProjectBtn = createElement('button', 'btn');
+      createProjectBtn.textContent = 'Create Implementation Project';
+      createProjectBtn.style.backgroundColor = 'rgba(34, 197, 94, 0.2)';
+      createProjectBtn.style.borderColor = 'rgba(34, 197, 94, 0.4)';
+      createProjectBtn.id = 'createProjectBtn';
+
+      // Check if project already created
+      if (currentSession && currentSession.implementationProjectId) {
+        createProjectBtn.disabled = true;
+        createProjectBtn.textContent = 'Project Created ✓';
+      }
+
+      createProjectBtn.addEventListener('click', async () => {
+        if (currentSession && currentSession.implementationProjectId) {
+          showStatus('Implementation project already created', 'info');
+          return;
+        }
+
+        createProjectBtn.disabled = true;
+        createProjectBtn.textContent = 'Creating Project...';
+
+        try {
+          const response = await fetch('/api/planning/create-implementation-project', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            currentSession.implementationProjectId = result.data.projectId;
+            createProjectBtn.textContent = 'Project Created ✓';
+            showStatus('✓ Implementation project created! View in SDLC dashboard.', 'success');
+
+            // Add link to SDLC dashboard
+            setTimeout(() => {
+              const link = createElement('a');
+              link.textContent = 'Open SDLC Dashboard →';
+              link.href = '/';
+              link.style.cssText = 'display: inline-block; margin-top: 1rem; color: var(--primary); text-decoration: underline; cursor: pointer;';
+              const statusEl = document.querySelector('.status-message');
+              if (statusEl) {
+                statusEl.appendChild(document.createElement('br'));
+                statusEl.appendChild(link);
+              }
+            }, 100);
+          } else {
+            showStatus('Failed to create project: ' + result.error, 'error');
+            createProjectBtn.disabled = false;
+            createProjectBtn.textContent = 'Create Implementation Project';
+          }
+        } catch (error) {
+          console.error('Failed to create implementation project:', error);
+          showStatus('Failed to create implementation project', 'error');
+          createProjectBtn.disabled = false;
+          createProjectBtn.textContent = 'Create Implementation Project';
+        }
+      });
+
       const completeBtn = createElement('button', 'btn');
       completeBtn.textContent = 'Complete Design Phase';
       completeBtn.addEventListener('click', () => completePhase());
@@ -3106,6 +3926,7 @@ app.get('/planning', (c) => {
       actions.appendChild(regenerateBtn);
       actions.appendChild(downloadAllBtn);
       actions.appendChild(exportAllBtn);
+      actions.appendChild(createProjectBtn);
       actions.appendChild(completeBtn);
       header.appendChild(actions);
 
@@ -3527,12 +4348,41 @@ app.get('/planning', (c) => {
 
     function showStatus(message, type = 'success') {
       const statusEl = document.getElementById('statusMessage');
-      statusEl.textContent = message;
+      statusEl.textContent = '';  // Clear previous content
       statusEl.className = 'status-message ' + type;
-      statusEl.style.display = 'block';
+      statusEl.style.display = 'flex';
 
+      // Add icon
+      const icon = createElement('span', 'icon');
+      icon.textContent = type === 'success' ? '✓' : type === 'error' ? '⚠' : 'ⓘ';
+      statusEl.appendChild(icon);
+
+      // Add message
+      const messageSpan = createElement('span');
+      messageSpan.textContent = message;
+      statusEl.appendChild(messageSpan);
+
+      // Add close button
+      const closeBtn = createElement('button', 'close-btn');
+      closeBtn.innerHTML = '×';
+      closeBtn.addEventListener('click', () => {
+        statusEl.style.animation = 'fadeOut 0.3s ease-out';
+        setTimeout(() => {
+          statusEl.style.display = 'none';
+          statusEl.style.animation = '';
+        }, 300);
+      });
+      statusEl.appendChild(closeBtn);
+
+      // Auto-dismiss after 5 seconds
       setTimeout(() => {
-        statusEl.style.display = 'none';
+        if (statusEl.style.display !== 'none') {
+          statusEl.style.animation = 'fadeOut 0.3s ease-out';
+          setTimeout(() => {
+            statusEl.style.display = 'none';
+            statusEl.style.animation = '';
+          }, 300);
+        }
       }, 5000);
     }
 
@@ -3586,7 +4436,14 @@ app.get('/planning', (c) => {
       }
     });
 
-    initSession();
+    // Check for saved session on page load
+    const savedSession = loadSessionFromStorage();
+    if (savedSession) {
+      showResumeSessionModal(savedSession);
+    } else {
+      showOnboardingModal();
+      initSession();
+    }
   </script>
 </body>
 </html>`)
@@ -3635,6 +4492,93 @@ app.post('/api/planning/initialize', async (c) => {
 })
 
 /**
+ * Resume planning session from localStorage
+ */
+app.post('/api/planning/resume-session', async (c) => {
+  try {
+    const body = await c.req.json()
+
+    const {
+      sessionId,
+      projectName,
+      currentPhase,
+      completedPhases,
+      requirementsData,
+      designData
+    } = body
+
+    if (!sessionId || !projectName) {
+      return c.json({
+        success: false,
+        error: 'Missing required session data'
+      }, 400)
+    }
+
+    // Recreate session
+    const session: PlanningSession = {
+      id: sessionId,
+      projectName: projectName,
+      description: requirementsData?.description || '',
+      currentPhase: currentPhase || 'requirements',
+      completedPhases: completedPhases || [],
+      phaseData: {},
+      createdAt: new Date(), // New creation time for resumed session
+      updatedAt: new Date()
+    }
+
+    // Restore requirements data if exists
+    if (requirementsData) {
+      session.phaseData.requirements = {
+        projectName: requirementsData.projectName || projectName,
+        description: requirementsData.description || '',
+        problemStatement: requirementsData.problemStatement || '',
+        targetAudience: requirementsData.targetAudience || '',
+        features: requirementsData.features || [],
+        successMetrics: requirementsData.successMetrics || [],
+        outOfScope: requirementsData.outOfScope || [],
+        generatedPRD: requirementsData.generatedPRD,
+        generatedAt: requirementsData.generatedAt ? new Date(requirementsData.generatedAt) : undefined
+      }
+    }
+
+    // Restore design data if exists
+    if (designData) {
+      session.phaseData.design = {
+        systemArchitecture: designData.systemArchitecture || '',
+        architectureDescription: designData.architectureDescription || '',
+        components: designData.components || [],
+        databaseSchema: designData.databaseSchema || '',
+        apiContracts: designData.apiContracts || '',
+        technologyStack: designData.technologyStack || {
+          languages: [],
+          frameworks: [],
+          databases: [],
+          infrastructure: []
+        },
+        architecturalDecisions: designData.architecturalDecisions || [],
+        generatedTechSpec: designData.generatedTechSpec,
+        generatedADRs: designData.generatedADRs,
+        techSpecGeneratedAt: designData.techSpecGeneratedAt ? new Date(designData.techSpecGeneratedAt) : undefined
+      }
+    }
+
+    planningSessions.set(sessionId, session)
+
+    return c.json({
+      success: true,
+      data: {
+        session: session
+      }
+    })
+  } catch (error) {
+    return c.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to resume session'
+    }, 500)
+  }
+})
+
+/**
  * Get current planning session state
  */
 app.get('/api/planning/state', (c) => {
@@ -3656,6 +4600,76 @@ app.get('/api/planning/state', (c) => {
     return c.json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
+    }, 500)
+  }
+})
+
+/**
+ * Create implementation project from completed planning session
+ */
+app.post('/api/planning/create-implementation-project', async (c) => {
+  try {
+    const session = Array.from(planningSessions.values())[0]
+
+    if (!session) {
+      return c.json({
+        success: false,
+        error: 'No active planning session'
+      }, 404)
+    }
+
+    // Verify both phases are complete
+    if (!session.completedPhases.includes('requirements') || !session.completedPhases.includes('design')) {
+      return c.json({
+        success: false,
+        error: 'Both Requirements and Design phases must be completed first'
+      }, 400)
+    }
+
+    // Check if already created
+    if (session.implementationProjectId) {
+      return c.json({
+        success: false,
+        error: 'Implementation project already created',
+        data: {
+          projectId: session.implementationProjectId
+        }
+      }, 400)
+    }
+
+    // Get requirements and design data
+    const requirements = session.phaseData.requirements
+    const design = session.phaseData.design
+
+    if (!requirements || !design) {
+      return c.json({
+        success: false,
+        error: 'Missing planning data'
+      }, 400)
+    }
+
+    // Create project using SDLC orchestrator
+    const project = await sdlcOrchestrator.startProject({
+      name: session.projectName,
+      description: requirements.description || session.description || ''
+    })
+
+    // Store project ID in session
+    session.implementationProjectId = project.id
+    session.updatedAt = new Date()
+    planningSessions.set(session.id, session)
+
+    return c.json({
+      success: true,
+      data: {
+        projectId: project.id,
+        message: 'Implementation project created successfully'
+      }
+    })
+  } catch (error) {
+    return c.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to create implementation project'
     }, 500)
   }
 })
