@@ -1,10 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Multi-Agent System Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --primary: hsl(250, 84%, 67%);
+      --primary-dark: hsl(250, 84%, 57%);
+      --secondary: hsl(280, 67%, 55%);
+      --accent: hsl(190, 90%, 50%);
+      --bg: hsl(240, 20%, 8%);
+      --card-bg: hsla(240, 20%, 15%, 0.7);
+      --card-border: hsla(240, 20%, 30%, 0.5);
+      --text: hsl(0, 0%, 95%);
+      --text-muted: hsl(240, 5%, 70%);
+      --success: hsl(145, 80%, 45%);
+      --error: hsl(0, 84%, 60%);
+      --warning: hsl(45, 100%, 60%);
+      --glass-blur: 16px;
+      --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+      --radius: 16px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
     * {
       margin: 0;
       padding: 0;
@@ -12,122 +35,189 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(at 0% 0%, hsla(250, 84%, 67%, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, hsla(280, 67%, 55%, 0.15) 0px, transparent 50%);
+      color: var(--text);
       min-height: 100vh;
-      padding: 2rem;
+      line-height: 1.6;
+      overflow-x: hidden;
+      padding: 0 1rem;
     }
 
     .container {
-      max-width: 1200px;
-      margin: 0 auto;
+      max-width: 1000px;
+      margin: 4rem auto;
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .header {
       text-align: center;
-      color: white;
-      margin-bottom: 3rem;
+      margin-bottom: 4rem;
     }
 
     .header h1 {
-      font-size: 2.5rem;
-      margin-bottom: 0.5rem;
+      font-size: 3.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--text) 0%, var(--primary) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.75rem;
     }
 
     .header p {
-      font-size: 1.1rem;
-      opacity: 0.9;
+      font-size: 1.25rem;
+      color: var(--text-muted);
+      font-weight: 300;
     }
 
     .stats {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 1.5rem;
-      margin-bottom: 2rem;
+      margin-bottom: 3rem;
     }
 
     .stat-card {
-      background: white;
-      padding: 1.5rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      background: var(--card-bg);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      border: 1px solid var(--card-border);
+      padding: 1.75rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--primary);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--primary);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
     }
 
     .stat-card h3 {
-      font-size: 0.875rem;
-      color: #6b7280;
+      font-size: 0.8rem;
+      color: var(--text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.5rem;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+      font-weight: 600;
     }
 
     .stat-card .value {
-      font-size: 2rem;
-      font-weight: bold;
-      color: #667eea;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--primary);
     }
 
     .card {
-      background: white;
-      border-radius: 12px;
-      padding: 2rem;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      margin-bottom: 2rem;
+      background: var(--card-bg);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 2.5rem;
+      box-shadow: var(--shadow);
+      margin-bottom: 2.5rem;
+      transition: var(--transition);
     }
 
     .card h2 {
-      font-size: 1.5rem;
-      margin-bottom: 1.5rem;
-      color: #1f2937;
+      font-size: 1.75rem;
+      font-weight: 600;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
     }
 
     .input-group {
-      margin-bottom: 1.5rem;
+      margin-bottom: 2rem;
     }
 
     .input-group label {
       display: block;
+      font-size: 0.95rem;
       font-weight: 500;
-      margin-bottom: 0.5rem;
-      color: #374151;
+      margin-bottom: 0.75rem;
+      color: var(--text-muted);
     }
 
     .input-group input,
     .input-group textarea {
       width: 100%;
-      padding: 0.75rem 1rem;
-      border: 2px solid #e5e7eb;
-      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      background: hsla(240, 20%, 5%, 0.5);
+      border: 2px solid var(--card-border);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: inherit;
       font-size: 1rem;
-      transition: border-color 0.2s;
+      transition: var(--transition);
     }
 
     .input-group input:focus,
     .input-group textarea:focus {
       outline: none;
-      border-color: #667eea;
+      border-color: var(--primary);
+      background: hsla(240, 20%, 5%, 0.8);
+      box-shadow: 0 0 0 4px hsla(250, 84%, 67%, 0.15);
     }
 
     .input-group textarea {
       resize: vertical;
-      min-height: 100px;
+      min-height: 120px;
     }
 
     .btn {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
       color: white;
-      padding: 0.875rem 2rem;
+      padding: 1rem 2.5rem;
       border: none;
-      border-radius: 8px;
-      font-size: 1rem;
+      border-radius: 12px;
+      font-size: 1.1rem;
       font-weight: 600;
       cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      box-shadow: 0 4px 15px hsla(250, 84%, 67%, 0.3);
     }
 
     .btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+      box-shadow: 0 8px 25px hsla(250, 84%, 67%, 0.5);
+      filter: brightness(1.1);
     }
 
     .btn:active {
@@ -135,120 +225,211 @@
     }
 
     .btn:disabled {
-      opacity: 0.6;
+      opacity: 0.5;
       cursor: not-allowed;
       transform: none;
+      box-shadow: none;
     }
 
     .result {
-      margin-top: 1.5rem;
-      padding: 1.5rem;
-      background: #f9fafb;
-      border-radius: 8px;
-      border-left: 4px solid #667eea;
+      margin-top: 2rem;
+      padding: 2rem;
+      background: hsla(0, 0%, 100%, 0.03);
+      border-radius: 14px;
+      border-left: 5px solid var(--primary);
+      animation: slideIn 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
     }
 
     .result.error {
-      border-left-color: #ef4444;
-      background: #fef2f2;
+      border-left-color: var(--error);
+      background: hsla(0, 84%, 60%, 0.05);
     }
 
     .result h3 {
-      font-size: 1.125rem;
-      margin-bottom: 1rem;
-      color: #1f2937;
+      font-size: 1.25rem;
+      margin-bottom: 1.5rem;
+      color: var(--text);
     }
 
     .result-field {
-      margin-bottom: 0.75rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
     }
 
     .result-field strong {
-      color: #6b7280;
-      display: inline-block;
-      width: 120px;
+      color: var(--text-muted);
+      font-weight: 500;
+      width: 140px;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
     .result-field span {
-      color: #1f2937;
+      color: var(--text);
+      font-weight: 500;
     }
 
     .confidence {
-      display: inline-block;
-      padding: 0.25rem 0.75rem;
-      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
       font-weight: 600;
-      font-size: 0.875rem;
+      font-size: 0.85rem;
     }
 
     .confidence.high {
-      background: #d1fae5;
-      color: #065f46;
+      background: hsla(145, 80%, 45%, 0.15);
+      color: var(--success);
+      border: 1px solid hsla(145, 80%, 45%, 0.3);
     }
 
     .confidence.medium {
-      background: #fef3c7;
-      color: #92400e;
+      background: hsla(45, 100%, 60%, 0.15);
+      color: var(--warning);
+      border: 1px solid hsla(45, 100%, 60%, 0.3);
     }
 
     .confidence.low {
-      background: #fee2e2;
-      color: #991b1b;
+      background: hsla(0, 84%, 60%, 0.15);
+      color: var(--error);
+      border: 1px solid hsla(0, 84%, 60%, 0.3);
     }
 
     .loading {
       text-align: center;
-      padding: 2rem;
-      color: #6b7280;
+      padding: 3rem;
+      color: var(--text-muted);
+      font-style: italic;
     }
 
     .domains-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
     }
 
     .domain-card {
-      padding: 1rem;
-      background: #f9fafb;
-      border-radius: 8px;
-      border-left: 4px solid #667eea;
+      padding: 1.5rem;
+      background: hsla(0, 0%, 100%, 0.02);
+      border-radius: var(--radius);
+      border: 1px solid var(--card-border);
+      transition: var(--transition);
+    }
+
+    .domain-card:hover {
+      border-color: var(--primary);
+      background: hsla(0, 0%, 100%, 0.05);
     }
 
     .domain-card h4 {
-      font-size: 1rem;
+      font-size: 1.1rem;
       margin-bottom: 0.5rem;
-      color: #1f2937;
+      color: var(--text);
       text-transform: capitalize;
+      font-weight: 600;
     }
 
     .domain-card .count {
-      font-size: 0.875rem;
-      color: #6b7280;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
     }
 
     .agent-list {
-      margin-top: 0.75rem;
+      margin-top: 1rem;
       list-style: none;
     }
 
     .agent-list li {
-      padding: 0.5rem;
-      margin-bottom: 0.25rem;
-      background: white;
-      border-radius: 4px;
-      font-size: 0.875rem;
-      color: #374151;
+      padding: 0.6rem 0.75rem;
+      margin-bottom: 0.5rem;
+      background: hsla(0, 0%, 0%, 0.2);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: var(--text);
+      border: 1px solid transparent;
+      transition: var(--transition);
+    }
+
+    .agent-list li:hover {
+      border-color: var(--card-border);
+      background: hsla(0, 0%, 0%, 0.4);
     }
 
     footer {
       text-align: center;
-      color: white;
-      margin-top: 3rem;
-      opacity: 0.9;
+      color: var(--text-muted);
+      margin-top: 5rem;
+      padding-bottom: 4rem;
+      font-size: 0.9rem;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--card-border);
+      border-radius: 5px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+
+    /* Custom styles for the special sections */
+    .sdlc-deliverable {
+      padding: 1rem;
+      background: hsla(0, 0%, 100%, 0.03);
+      border-radius: 12px;
+      margin-bottom: 0.75rem;
+      border: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .status-pill {
+      padding: 0.25rem 0.75rem;
+      border-radius: 100px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .status-completed {
+      background: hsla(145, 80%, 45%, 0.2);
+      color: var(--success);
+    }
+
+    .status-pending {
+      background: hsla(45, 100%, 60%, 0.2);
+      color: var(--warning);
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <div class="header">
@@ -275,32 +456,58 @@
       </div>
     </div>
 
+    <!-- Autonomous Task Execution Section -->
+    <div class="card"
+      style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); border: none;">
+      <h2 style="color: white;">🚀 Get Shit Done</h2>
+      <p style="color: white; opacity: 0.85; margin-bottom: 2rem; font-weight: 300;">Describe any goal and the AI will
+        autonomously break it down and execute it until completion.</p>
+
+      <form id="autonomousForm">
+        <div class="input-group">
+          <label for="goalInput" style="color: white;">What's your objective?</label>
+          <textarea id="goalInput"
+            placeholder="Example: Build a complete user authentication system with email verification..." rows="3"
+            required
+            style="background: rgba(0, 0, 0, 0.2); border-color: rgba(255, 255, 255, 0.2); color: white;"></textarea>
+        </div>
+        <button type="submit" class="btn" style="background: white; color: var(--primary); font-weight: 700;">
+          Launch Mission 🚀
+        </button>
+      </form>
+
+      <div id="autonomousStatus" style="margin-top: 2rem;"></div>
+    </div>
+
     <div class="card">
       <h2>🎯 Route Request</h2>
+      <p style="color: var(--text-muted); margin-bottom: 2rem;">Instantly find the perfect specialized agent for your
+        specific needs.</p>
       <form id="routeForm">
         <div class="input-group">
-          <label for="request">Describe your task:</label>
-          <textarea
-            id="request"
-            name="request"
+          <label for="request">What do you need help with?</label>
+          <textarea id="request" name="request"
             placeholder="Example: Build a React button component with primary and secondary variants"
-            required
-          ></textarea>
+            required></textarea>
         </div>
-        <button type="submit" class="btn">Find Agent</button>
+        <button type="submit" class="btn">Analyze Request</button>
       </form>
       <div id="routeResult"></div>
     </div>
 
     <div class="card">
       <h2>📊 System Overview</h2>
+      <p style="color: var(--text-muted); margin-bottom: 2rem;">Real-time view of our 46 specialized agents across 7
+        cognitive domains.</p>
       <div id="domains" class="domains-grid">
-        <div class="loading">Loading domains...</div>
+        <div class="loading">Initializing domain maps...</div>
       </div>
     </div>
 
     <footer>
-      <p>Built with Claude Code | Production-Ready | Test Coverage: 318+ tests</p>
+      <p>Built with Claude Code • Production-Ready • 318+ Automated Tests Passed</p>
+      <p style="margin-top: 0.5rem; opacity: 0.5; font-size: 0.8rem;">&copy; 2025 Multi-Agent Orchestration System
+        v2.0.0</p>
     </footer>
   </div>
 
@@ -564,10 +771,11 @@
       // Project header
       const header = createElement('div');
       header.style.marginTop = '2rem';
-      header.style.padding = '1rem';
-      header.style.background = '#f9fafb';
-      header.style.borderRadius = '8px';
-      header.style.marginBottom = '1rem';
+      header.style.padding = '1.5rem';
+      header.style.background = 'hsla(0, 0%, 100%, 0.03)';
+      header.style.borderRadius = '12px';
+      header.style.border = '1px solid var(--card-border)';
+      header.style.marginBottom = '1.5rem';
 
       const projName = createElement('h3', null, project.name);
       projName.style.marginBottom = '0.5rem';
@@ -588,7 +796,7 @@
 
       const phaseLabel = createElement('strong', null, 'Current Phase: ');
       const phaseValue = createElement('span', null, project.currentPhase.toUpperCase());
-      phaseValue.style.color = '#667eea';
+      phaseValue.style.color = 'var(--primary)';
       phaseValue.style.fontWeight = 'bold';
 
       phaseDiv.appendChild(phaseLabel);
@@ -616,8 +824,8 @@
         delivStatus.style.padding = '0.25rem 0.5rem';
         delivStatus.style.borderRadius = '4px';
         delivStatus.style.fontSize = '0.875rem';
-        delivStatus.style.background = deliv.status === 'completed' ? '#d1fae5' : '#fef3c7';
-        delivStatus.style.color = deliv.status === 'completed' ? '#065f46' : '#92400e';
+        delivStatus.style.background = deliv.status === 'completed' ? 'hsla(145, 80%, 45%, 0.2)' : 'hsla(45, 100%, 60%, 0.2)';
+        delivStatus.style.color = deliv.status === 'completed' ? 'var(--success)' : 'var(--warning)';
 
         delivRow.appendChild(delivName);
         delivRow.appendChild(delivStatus);
@@ -665,5 +873,254 @@
     // Initialize SDLC section
     addSDLCSection();
   </script>
+
+  <!-- Autonomous Task Execution -->
+  <script>
+    let currentTaskId = null;
+    let pollInterval = null;
+
+    // Handle autonomous task form submission
+    document.getElementById('autonomousForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const goal = document.getElementById('goalInput').value;
+      const statusDiv = document.getElementById('autonomousStatus');
+
+      // Show loading state
+      statusDiv.textContent = '';
+      const loading = createElement('div');
+      loading.textContent = '🔄 Creating task and breaking down into steps via Claude Code CLI...';
+      loading.style.padding = '1rem';
+      loading.style.background = 'rgba(255,255,255,0.2)';
+      loading.style.borderRadius = '8px';
+      loading.style.marginBottom = '1rem';
+      statusDiv.appendChild(loading);
+
+      try {
+        // Create and start autonomous task using Claude CLI
+        const response = await fetch('/api/autonomous/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ goal })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          currentTaskId = data.data.id;
+
+          // Clear form
+          document.getElementById('goalInput').value = '';
+
+          // Start polling for updates
+          startTaskPolling(currentTaskId);
+        } else {
+          statusDiv.textContent = '';
+          const error = createElement('div');
+          error.textContent = '❌ Error: ' + data.error;
+          error.style.color = '#fecaca';
+          statusDiv.appendChild(error);
+        }
+      } catch (error) {
+        statusDiv.textContent = '';
+        const errorMsg = createElement('div');
+        errorMsg.textContent = '❌ Failed to create task: ' + error.message;
+        errorMsg.style.color = '#fecaca';
+        statusDiv.appendChild(errorMsg);
+      }
+    });
+
+    // Poll for task updates
+    function startTaskPolling(taskId) {
+      // Clear any existing interval
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+
+      // Poll every 2 seconds
+      pollInterval = setInterval(async () => {
+        try {
+          const response = await fetch(`/api/autonomous/tasks/${taskId}`);
+          const data = await response.json();
+
+          if (data.success) {
+            displayTaskProgress(data.data);
+
+            // Stop polling if task is complete or failed
+            if (data.data.status === 'completed' || data.data.status === 'failed') {
+              clearInterval(pollInterval);
+              pollInterval = null;
+            }
+          }
+        } catch (error) {
+          console.error('Polling error:', error);
+        }
+      }, 2000);
+    }
+
+    // Display task progress
+    function displayTaskProgress(task) {
+      const statusDiv = document.getElementById('autonomousStatus');
+      statusDiv.textContent = ''; // Clear previous content
+
+      // Task header
+      const header = createElement('div');
+      header.style.marginBottom = '1.5rem';
+
+      const title = createElement('h3', null, task.goal);
+      title.style.color = 'white';
+      title.style.marginBottom = '0.5rem';
+
+      const statusBadge = createElement('div');
+      statusBadge.style.display = 'inline-block';
+      statusBadge.style.padding = '0.25rem 0.75rem';
+      statusBadge.style.borderRadius = '12px';
+      statusBadge.style.fontSize = '0.875rem';
+      statusBadge.style.fontWeight = 'bold';
+
+      if (task.status === 'planning') {
+        statusBadge.textContent = '🧠 Planning';
+        statusBadge.style.background = '#fef3c7';
+        statusBadge.style.color = '#92400e';
+      } else if (task.status === 'executing') {
+        statusBadge.textContent = '⚡ Executing';
+        statusBadge.style.background = '#dbeafe';
+        statusBadge.style.color = '#1e40af';
+      } else if (task.status === 'completed') {
+        statusBadge.textContent = '✅ Completed';
+        statusBadge.style.background = '#d1fae5';
+        statusBadge.style.color = '#065f46';
+      } else if (task.status === 'failed') {
+        statusBadge.textContent = '❌ Failed';
+        statusBadge.style.background = '#fecaca';
+        statusBadge.style.color = '#991b1b';
+      }
+
+      header.appendChild(title);
+      header.appendChild(statusBadge);
+      statusDiv.appendChild(header);
+
+      // Progress bar
+      const completedSteps = task.steps.filter(s => s.status === 'completed').length;
+      const totalSteps = task.steps.length;
+      const progress = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0;
+
+      const progressContainer = createElement('div');
+      progressContainer.style.background = 'rgba(255,255,255,0.2)';
+      progressContainer.style.borderRadius = '8px';
+      progressContainer.style.height = '8px';
+      progressContainer.style.marginBottom = '1rem';
+      progressContainer.style.overflow = 'hidden';
+
+      const progressBar = createElement('div');
+      progressBar.style.background = 'white';
+      progressBar.style.height = '100%';
+      progressBar.style.width = progress + '%';
+      progressBar.style.transition = 'width 0.3s ease';
+
+      progressContainer.appendChild(progressBar);
+      statusDiv.appendChild(progressContainer);
+
+      const progressText = createElement('div');
+      progressText.textContent = `Progress: ${completedSteps}/${totalSteps} steps completed (${Math.round(progress)}%)`;
+      progressText.style.marginBottom = '1.5rem';
+      progressText.style.fontSize = '0.875rem';
+      progressText.style.opacity = '0.9';
+      statusDiv.appendChild(progressText);
+
+      // Steps list
+      const stepsContainer = createElement('div');
+      stepsContainer.style.background = 'rgba(255,255,255,0.1)';
+      stepsContainer.style.borderRadius = '8px';
+      stepsContainer.style.padding = '1rem';
+
+      task.steps.forEach(step => {
+        const stepDiv = createElement('div');
+        stepDiv.style.padding = '0.75rem';
+        stepDiv.style.marginBottom = '0.5rem';
+        stepDiv.style.background = 'rgba(255,255,255,0.1)';
+        stepDiv.style.borderRadius = '6px';
+        stepDiv.style.borderLeft = '4px solid';
+
+        if (step.status === 'completed') {
+          stepDiv.style.borderColor = 'var(--success)';
+        } else if (step.status === 'in_progress') {
+          stepDiv.style.borderColor = 'var(--primary)';
+        } else if (step.status === 'failed') {
+          stepDiv.style.borderColor = 'var(--error)';
+        } else {
+          stepDiv.style.borderColor = 'var(--card-border)';
+        }
+
+        const stepHeader = createElement('div');
+        stepHeader.style.display = 'flex';
+        stepHeader.style.justifyContent = 'space-between';
+        stepHeader.style.marginBottom = '0.25rem';
+
+        const stepTitle = createElement('strong', null, `Step ${step.stepNumber}: ${step.description}`);
+        const stepIcon = createElement('span');
+
+        if (step.status === 'completed') {
+          stepIcon.textContent = '✅';
+        } else if (step.status === 'in_progress') {
+          stepIcon.textContent = '⚡';
+        } else if (step.status === 'failed') {
+          stepIcon.textContent = '❌';
+        } else {
+          stepIcon.textContent = '⏳';
+        }
+
+        stepHeader.appendChild(stepTitle);
+        stepHeader.appendChild(stepIcon);
+        stepDiv.appendChild(stepHeader);
+
+        if (step.agent) {
+          const agentInfo = createElement('div');
+          agentInfo.textContent = `Agent: ${step.agent}`;
+          agentInfo.style.fontSize = '0.875rem';
+          agentInfo.style.opacity = '0.8';
+          agentInfo.style.marginBottom = '0.25rem';
+          stepDiv.appendChild(agentInfo);
+        }
+
+        if (step.error) {
+          const errorMsg = createElement('div');
+          errorMsg.textContent = `Error: ${step.error}`;
+          errorMsg.style.fontSize = '0.875rem';
+          errorMsg.style.color = '#fecaca';
+          errorMsg.style.marginTop = '0.5rem';
+          stepDiv.appendChild(errorMsg);
+        }
+
+        stepsContainer.appendChild(stepDiv);
+      });
+
+      statusDiv.appendChild(stepsContainer);
+
+      // Task output if completed
+      if (task.status === 'completed' && task.output) {
+        const outputDiv = createElement('div');
+        outputDiv.style.marginTop = '1.5rem';
+        outputDiv.style.padding = '1rem';
+        outputDiv.style.background = 'rgba(255,255,255,0.1)';
+        outputDiv.style.borderRadius = '8px';
+
+        const outputTitle = createElement('h4', null, '📋 Task Summary');
+        outputTitle.style.color = 'white';
+        outputTitle.style.marginBottom = '0.5rem';
+
+        const outputText = createElement('pre');
+        outputText.textContent = task.output;
+        outputText.style.whiteSpace = 'pre-wrap';
+        outputText.style.fontSize = '0.875rem';
+        outputText.style.opacity = '0.9';
+
+        outputDiv.appendChild(outputTitle);
+        outputDiv.appendChild(outputText);
+        statusDiv.appendChild(outputDiv);
+      }
+    }
+  </script>
 </body>
+
 </html>

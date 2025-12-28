@@ -13,6 +13,7 @@ import { AgentRouter } from '../runtime/router.js';
 import { AgentExecutor } from '../runtime/executor.js';
 import { SDLCOrchestrator } from '../sdlc/orchestrator.js';
 import { SDLCPhase } from '../sdlc/types.js';
+import { AutonomousTaskExecutor } from '../autonomous/task-executor.js';
 import { z } from 'zod';
 
 const app = new Hono();
@@ -24,9 +25,10 @@ app.use('*', cors());
 // Serve static files from public directory
 app.use('/*', serveStatic({ root: './public' }));
 
-// Initialize router, executor, and SDLC orchestrator
+// Initialize router, executor, SDLC orchestrator, and autonomous task executor
 const router = new AgentRouter();
 const sdlcOrchestrator = new SDLCOrchestrator();
+let autonomousExecutor: AutonomousTaskExecutor | null = null;
 let routerInitialized = false;
 
 const initRouter = async () => {
@@ -34,6 +36,14 @@ const initRouter = async () => {
     await router.loadAgents();
     routerInitialized = true;
   }
+};
+
+const initAutonomous = async () => {
+  if (!autonomousExecutor) {
+    autonomousExecutor = new AutonomousTaskExecutor();
+    await autonomousExecutor.initialize();
+  }
+  return autonomousExecutor;
 };
 
 // Request schemas
@@ -317,6 +327,96 @@ app.get('/api/test', async (c) => {
 });
 
 // ========================================
+// AUTONOMOUS TASK EXECUTION ENDPOINTS
+// ========================================
+
+/**
+ * Create and execute autonomous task
+ */
+app.post('/api/autonomous/tasks', async (c) => {
+  try {
+    const body = await c.req.json();
+    const { goal } = body;
+
+    if (!goal) {
+      return c.json({
+        success: false,
+        error: 'Goal is required'
+      }, 400);
+    }
+
+    const executor = await initAutonomous();
+
+    // Create task (breaks down into steps using Claude CLI)
+    const task = await executor.createTask(goal);
+
+    // Start execution in background using Claude CLI
+    executor.executeTask(task.id).catch(error => {
+      console.error(`Task ${task.id} execution error:`, error);
+    });
+
+    return c.json({
+      success: true,
+      data: task
+    });
+  } catch (error) {
+    return c.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
+/**
+ * Get task status
+ */
+app.get('/api/autonomous/tasks/:id', async (c) => {
+  try {
+    const id = c.req.param('id');
+
+    const executor = await initAutonomous();
+    const task = executor.getTask(id);
+
+    if (!task) {
+      return c.json({
+        success: false,
+        error: 'Task not found'
+      }, 404);
+    }
+
+    return c.json({
+      success: true,
+      data: task
+    });
+  } catch (error) {
+    return c.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
+/**
+ * List all tasks
+ */
+app.get('/api/autonomous/tasks', async (c) => {
+  try {
+    const executor = await initAutonomous();
+    const tasks = executor.getAllTasks();
+
+    return c.json({
+      success: true,
+      data: tasks
+    });
+  } catch (error) {
+    return c.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
+// ========================================
 // SDLC ENDPOINTS
 // ========================================
 
@@ -572,6 +672,10 @@ serve({
   console.log(`   POST /api/route                                 - Route a request`);
   console.log(`   POST /api/execute                               - Execute agent task`);
   console.log(`   GET  /api/test                                  - Run test cases`);
+  console.log(`\nAutonomous Execution Endpoints:`);
+  console.log(`   POST /api/autonomous/tasks                      - Create and execute task`);
+  console.log(`   GET  /api/autonomous/tasks/:id                  - Get task status`);
+  console.log(`   GET  /api/autonomous/tasks                      - List all tasks`);
   console.log(`\nSDLC Endpoints:`);
   console.log(`   POST /api/sdlc/projects                         - Create SDLC project`);
   console.log(`   GET  /api/sdlc/projects/:id                     - Get project details`);
