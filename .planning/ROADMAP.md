@@ -22,10 +22,10 @@ None
 **Goal**: Extend existing web dashboard with planning workflow UI framework and phase navigation
 **Depends on**: Nothing (first phase)
 **Research**: Unlikely (extending existing Hono server and HTML/CSS patterns from public/index.html)
-**Plans**: TBD
+**Plans**: 1
 
 Plans:
-- [ ] TBD during phase planning
+- [ ] 01-01-PLAN.md: Set up planning workflow UI framework with phase navigation (4 tasks)
 
 ### Phase 2: Requirements Phase UI
 **Goal**: Build guided interface for PRD generation with Claude API integration
@@ -77,7 +77,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. UI Foundation | 0/TBD | Not started | - |
+| 1. UI Foundation | 0/1 | Planned | - |
 | 2. Requirements Phase UI | 0/TBD | Not started | - |
 | 3. Design Phase UI | 0/TBD | Not started | - |
 | 4. File Generation & Export | 0/TBD | Not started | - |
