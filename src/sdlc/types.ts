@@ -614,6 +614,13 @@ export interface ArchitecturalDecision {
   rationale: string
 }
 
+export interface GeneratedADR {
+  id: string // ADR-001, ADR-002, etc.
+  title: string
+  content: string // Full markdown content
+  generatedAt: Date
+}
+
 export interface DesignFormData {
   systemArchitecture: string
   architectureDescription: string
@@ -623,6 +630,9 @@ export interface DesignFormData {
   technologyStack: TechStack
   architecturalDecisions: ArchitecturalDecision[]
   lastSaved?: Date
+  generatedTechSpec?: string  // Claude-generated Tech Spec
+  techSpecGeneratedAt?: Date   // Timestamp
+  generatedADRs?: GeneratedADR[]  // Claude-generated ADRs
 }
 
 export interface PlanningSession {

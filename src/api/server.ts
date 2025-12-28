@@ -12,7 +12,7 @@ import { logger } from 'hono/logger';
 import { AgentRouter } from '../runtime/router.js';
 import { AgentExecutor } from '../runtime/executor.js';
 import { SDLCOrchestrator } from '../sdlc/orchestrator.js';
-import { SDLCPhase, PlanningSession, RequirementsFormData } from '../sdlc/types.js';
+import { SDLCPhase, PlanningSession, RequirementsFormData, DesignFormData, ArchitecturalDecision, GeneratedADR } from '../sdlc/types.js';
 import { AutonomousTaskExecutor } from '../autonomous/task-executor.js';
 import { z } from 'zod';
 import Anthropic from '@anthropic-ai/sdk';
@@ -221,6 +221,192 @@ async function generatePRD(requirements: RequirementsFormData): Promise<string> 
   } catch (error) {
     console.error('Claude API error:', error)
     throw new Error(`Failed to generate PRD: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  }
+}
+
+/**
+ * Build Tech Spec generation prompt from design data
+ */
+function buildTechSpecPrompt(
+  designData: DesignFormData,
+  prdContext?: string
+): string {
+  return `<context>
+Project: ${designData.systemArchitecture} architecture
+
+Previous Context (PRD from Requirements Phase):
+${prdContext || 'No PRD available'}
+
+Design Inputs:
+- System Architecture: ${designData.systemArchitecture}
+- Architecture Description: ${designData.architectureDescription}
+- Components: ${JSON.stringify(designData.components, null, 2)}
+- Database Schema: ${designData.databaseSchema}
+- API Contracts: ${designData.apiContracts}
+- Technology Stack:
+  Languages: ${designData.technologyStack.languages.join(', ')}
+  Frameworks: ${designData.technologyStack.frameworks.join(', ')}
+  Databases: ${designData.technologyStack.databases.join(', ')}
+  Infrastructure: ${designData.technologyStack.infrastructure.join(', ')}
+- Architectural Decisions: ${designData.architecturalDecisions.length} key decisions defined
+</context>
+
+<task>
+Generate a professional Technical Specification Document based on the design inputs above.
+
+Follow modern software engineering best practices for 2025 - be comprehensive but maintainable.
+
+Include all standard sections:
+1. Overview - High-level system description
+2. System Architecture - Architectural pattern, component diagram (ASCII art or description)
+3. Component Breakdown - Key modules/services and their responsibilities
+4. Data Models - Database schema, API contracts, data structures
+5. Technology Stack - Languages, frameworks, infrastructure choices with rationale
+6. Non-Functional Requirements - Performance, security, scalability, availability targets
+7. API Specifications - Key endpoints, request/response formats
+8. Dependencies - External services, libraries, integrations
+9. Deployment Strategy - How the system will be deployed and operated
+10. Testing Strategy - Unit, integration, E2E testing approach
+
+Format as markdown with clear headings, bullet points, and code blocks for schemas.
+Use ## for section headings (not #, as # is reserved for document title).
+</task>
+
+<format>
+# Technical Specification: [Project Name]
+
+## Overview
+[2-3 paragraphs describing the system at a high level]
+
+## System Architecture
+[Describe the architectural pattern and key design decisions]
+
+[Continue with all sections...]
+</format>
+
+Ask for any clarifications needed to generate the highest quality Technical Specification.`
+}
+
+/**
+ * Generate Tech Spec using Claude API
+ */
+async function generateTechSpec(
+  designData: DesignFormData,
+  prdContext?: string
+): Promise<string> {
+  const apiKey = process.env.ANTHROPIC_API_KEY
+
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY environment variable not set')
+  }
+
+  const anthropic = new Anthropic({ apiKey })
+  const prompt = buildTechSpecPrompt(designData, prdContext)
+
+  try {
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 6000, // Larger than PRD for comprehensive tech spec
+      temperature: 0.7,
+      system: 'You are an expert software architect writing professional technical specifications. Generate comprehensive, maintainable documentation following modern software engineering best practices.',
+      messages: [{ role: 'user', content: prompt }]
+    })
+
+    const techSpecText = message.content
+      .filter(block => block.type === 'text')
+      .map(block => block.text)
+      .join('\n')
+
+    return techSpecText
+  } catch (error) {
+    console.error('Claude API error:', error)
+    throw new Error(`Failed to generate Tech Spec: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  }
+}
+
+/**
+ * Build ADR generation prompt
+ */
+function buildADRPrompt(
+  decision: ArchitecturalDecision,
+  adrId: string,
+  projectContext: string
+): string {
+  return `<context>
+${projectContext}
+
+Architectural Decision to Document:
+- Title: ${decision.title}
+- Context Description: ${decision.contextDescription}
+- Decision Made: ${decision.decisionMade}
+- Rationale: ${decision.rationale}
+</context>
+
+<task>
+Generate an Architecture Decision Record (ADR) following the Michael Nygard template.
+
+The ADR must include these sections:
+1. Title - ${decision.title}
+2. Status - "proposed" (default for new ADRs)
+3. Context - Describe the forces at play (technological, political, social, project-local). Be value-neutral. Call out tensions explicitly.
+4. Decision - State our response to these forces in full sentences, active voice (e.g., "We will use...").
+5. Consequences - Describe the resulting context after applying this decision. Include both positive and negative consequences.
+
+Format as markdown.
+Use ## for section headings (not #, as # is reserved for the ADR title).
+</task>
+
+<format>
+# ${adrId}: ${decision.title}
+
+**Status:** proposed
+
+## Context
+[Describe the forces at play, tensions, and facts. Value-neutral language.]
+
+## Decision
+[State the decision in full sentences, active voice. Be specific.]
+
+## Consequences
+[Describe the resulting context - both positive and negative outcomes.]
+</format>`
+}
+
+/**
+ * Generate ADR using Claude API
+ */
+async function generateADR(
+  decision: ArchitecturalDecision,
+  adrId: string,
+  projectContext: string
+): Promise<string> {
+  const apiKey = process.env.ANTHROPIC_API_KEY
+
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY environment variable not set')
+  }
+
+  const anthropic = new Anthropic({ apiKey })
+  const prompt = buildADRPrompt(decision, adrId, projectContext)
+
+  try {
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 2000, // Smaller than Tech Spec - ADRs are concise
+      temperature: 0.7,
+      system: 'You are an expert software architect writing Architecture Decision Records (ADRs) following the Michael Nygard template. Generate clear, concise ADRs that document architectural decisions with context and consequences.',
+      messages: [{ role: 'user', content: prompt }]
+    })
+
+    const adrText = message.content
+      .filter(block => block.type === 'text')
+      .map(block => block.text)
+      .join('\n')
+
+    return adrText
+  } catch (error) {
+    console.error('Claude API error:', error)
+    throw new Error(`Failed to generate ADR: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
 
@@ -2447,7 +2633,7 @@ app.get('/planning', (c) => {
         if (currentPhase === 'requirements') {
           handleGeneratePRD();
         } else if (currentPhase === 'design') {
-          console.log('Design phase complete - ready for Tech Spec generation');
+          handleGenerateTechSpec();
         }
       }
     }
@@ -2666,6 +2852,67 @@ app.get('/planning', (c) => {
       }
     }
 
+    async function handleGenerateTechSpec() {
+      const continueBtn = document.getElementById('stepContinueBtn');
+      if (!continueBtn) return;
+
+      continueBtn.disabled = true;
+      continueBtn.textContent = 'Generating Tech Spec & ADRs...';
+
+      try {
+        // Step 1: Generate Tech Spec
+        const techSpecResponse = await fetch('/api/planning/design/generate-techspec', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        const techSpecResult = await techSpecResponse.json();
+
+        if (!techSpecResult.success) {
+          showStatus(techSpecResult.error || 'Failed to generate Tech Spec', 'error');
+          continueBtn.disabled = false;
+          continueBtn.textContent = 'Review';
+          return;
+        }
+
+        const techSpec = techSpecResult.data.techSpec;
+
+        // Step 2: Generate ADRs for each architectural decision
+        const generatedADRs = [];
+        const decisions = designFormData.architecturalDecisions || [];
+
+        for (let i = 0; i < decisions.length; i++) {
+          continueBtn.textContent = 'Generating ADR ' + (i + 1) + ' of ' + decisions.length + '...';
+
+          const adrResponse = await fetch('/api/planning/design/generate-adr', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              decisionIndex: i
+            })
+          });
+
+          const adrResult = await adrResponse.json();
+
+          if (adrResult.success) {
+            generatedADRs.push(adrResult.data.adr);
+          } else {
+            console.error('Failed to generate ADR ' + (i + 1) + ':', adrResult.error);
+            // Continue with other ADRs even if one fails
+          }
+        }
+
+        // Display results
+        displayTechSpecAndADRs(techSpec, generatedADRs);
+
+      } catch (error) {
+        console.error('Tech Spec/ADR generation failed:', error);
+        showStatus('Failed to generate documentation. Please try again.', 'error');
+        continueBtn.disabled = false;
+        continueBtn.textContent = 'Review';
+      }
+    }
+
     function displayPRD(prdMarkdown) {
       const container = document.getElementById('phaseForm');
       container.textContent = '';
@@ -2709,6 +2956,168 @@ app.get('/planning', (c) => {
 
       prdCard.appendChild(contentDiv);
       container.appendChild(prdCard);
+    }
+
+    function displayTechSpecAndADRs(techSpec, adrs) {
+      const container = document.getElementById('phaseForm');
+      container.textContent = '';
+
+      // Main container
+      const docsCard = createElement('div', 'glass-card');
+
+      // Header with actions
+      const header = createElement('div', 'prd-header');
+
+      const title = createElement('h2');
+      title.textContent = 'Generated Design Documentation';
+      header.appendChild(title);
+
+      const actions = createElement('div', 'prd-actions');
+
+      const regenerateBtn = createElement('button', 'btn btn-secondary');
+      regenerateBtn.textContent = 'Regenerate';
+      regenerateBtn.addEventListener('click', () => {
+        renderPhaseForm('design');
+        currentStep = 6;
+        document.getElementById('step-6').classList.add('active');
+        handleGenerateTechSpec();
+      });
+
+      const downloadAllBtn = createElement('button', 'btn btn-secondary');
+      downloadAllBtn.textContent = 'Download All';
+      downloadAllBtn.addEventListener('click', () => downloadAllDocs(techSpec, adrs));
+
+      const completeBtn = createElement('button', 'btn');
+      completeBtn.textContent = 'Complete Design Phase';
+      completeBtn.addEventListener('click', () => completePhase());
+
+      actions.appendChild(regenerateBtn);
+      actions.appendChild(downloadAllBtn);
+      actions.appendChild(completeBtn);
+      header.appendChild(actions);
+
+      docsCard.appendChild(header);
+
+      // Tab navigation
+      const tabNav = createElement('div');
+      tabNav.style.display = 'flex';
+      tabNav.style.gap = '1rem';
+      tabNav.style.borderBottom = '2px solid rgba(255, 255, 255, 0.1)';
+      tabNav.style.marginBottom = '2rem';
+      tabNav.style.paddingBottom = '0.5rem';
+
+      const techSpecTab = createElement('button', 'btn btn-secondary');
+      techSpecTab.textContent = 'Technical Specification';
+      techSpecTab.style.backgroundColor = 'rgba(99, 102, 241, 0.2)';
+      techSpecTab.addEventListener('click', () => showTab('techspec'));
+
+      tabNav.appendChild(techSpecTab);
+
+      adrs.forEach((adr, index) => {
+        const adrTab = createElement('button', 'btn btn-secondary');
+        adrTab.textContent = adr.id || ('ADR ' + (index + 1));
+        adrTab.id = 'tab-adr-' + index;
+        adrTab.addEventListener('click', () => showTab('adr-' + index));
+        tabNav.appendChild(adrTab);
+      });
+
+      docsCard.appendChild(tabNav);
+
+      // Content container
+      const contentContainer = createElement('div');
+      contentContainer.id = 'docs-content-container';
+
+      // Tech Spec content
+      const techSpecContent = createElement('div', 'doc-content');
+      techSpecContent.id = 'content-techspec';
+
+      const techSpecHeader = createElement('div');
+      techSpecHeader.style.display = 'flex';
+      techSpecHeader.style.justifyContent = 'space-between';
+      techSpecHeader.style.alignItems = 'center';
+      techSpecHeader.style.marginBottom = '1rem';
+
+      const techSpecTitle = createElement('h3');
+      techSpecTitle.textContent = 'Technical Specification';
+      techSpecHeader.appendChild(techSpecTitle);
+
+      const techSpecDownloadBtn = createElement('button', 'btn btn-secondary');
+      techSpecDownloadBtn.textContent = 'Download Tech Spec';
+      techSpecDownloadBtn.addEventListener('click', () => downloadTechSpec(techSpec));
+      techSpecHeader.appendChild(techSpecDownloadBtn);
+
+      techSpecContent.appendChild(techSpecHeader);
+
+      const techSpecBody = createElement('div', 'prd-content');
+      renderMarkdownSafely(techSpec.content, techSpecBody);
+      techSpecContent.appendChild(techSpecBody);
+
+      contentContainer.appendChild(techSpecContent);
+
+      // ADR contents
+      adrs.forEach((adr, index) => {
+        const adrContent = createElement('div', 'doc-content');
+        adrContent.id = 'content-adr-' + index;
+        adrContent.style.display = 'none';
+
+        const adrHeader = createElement('div');
+        adrHeader.style.display = 'flex';
+        adrHeader.style.justifyContent = 'space-between';
+        adrHeader.style.alignItems = 'center';
+        adrHeader.style.marginBottom = '1rem';
+
+        const adrTitle = createElement('h3');
+        adrTitle.textContent = adr.id + ': ' + adr.title;
+        adrHeader.appendChild(adrTitle);
+
+        const adrDownloadBtn = createElement('button', 'btn btn-secondary');
+        adrDownloadBtn.textContent = 'Download ADR';
+        adrDownloadBtn.addEventListener('click', () => downloadADR(adr));
+        adrHeader.appendChild(adrDownloadBtn);
+
+        adrContent.appendChild(adrHeader);
+
+        const adrBody = createElement('div', 'prd-content');
+        renderMarkdownSafely(adr.content, adrBody);
+        adrContent.appendChild(adrBody);
+
+        contentContainer.appendChild(adrContent);
+      });
+
+      docsCard.appendChild(contentContainer);
+      container.appendChild(docsCard);
+
+      // Tab switching logic
+      function showTab(tabId) {
+        // Hide all content
+        const allContents = contentContainer.querySelectorAll('.doc-content');
+        allContents.forEach(content => {
+          content.style.display = 'none';
+        });
+
+        // Reset all tab styles
+        const allTabs = tabNav.querySelectorAll('button');
+        allTabs.forEach(tab => {
+          tab.style.backgroundColor = '';
+        });
+
+        // Show selected content
+        const selectedContent = document.getElementById('content-' + tabId);
+        if (selectedContent) {
+          selectedContent.style.display = 'block';
+        }
+
+        // Highlight selected tab
+        if (tabId === 'techspec') {
+          techSpecTab.style.backgroundColor = 'rgba(99, 102, 241, 0.2)';
+        } else {
+          const adrIndex = parseInt(tabId.split('-')[1]);
+          const selectedTab = document.getElementById('tab-adr-' + adrIndex);
+          if (selectedTab) {
+            selectedTab.style.backgroundColor = 'rgba(99, 102, 241, 0.2)';
+          }
+        }
+      }
     }
 
     function renderMarkdownSafely(markdown, targetElement) {
@@ -2819,6 +3228,46 @@ app.get('/planning', (c) => {
       });
     }
 
+    function downloadTechSpec(techSpec) {
+      const blob = new Blob([techSpec.content], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+
+      const a = createElement('a');
+      a.href = url;
+      const projectName = requirementsFormData.projectName || 'Project';
+      a.download = projectName.replace(/\s+/g, '-') + '-TechSpec.md';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadADR(adr) {
+      const blob = new Blob([adr.content], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+
+      const a = createElement('a');
+      a.href = url;
+      const filename = adr.id.replace(/\s+/g, '-') + '-' + adr.title.replace(/\s+/g, '-') + '.md';
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadAllDocs(techSpec, adrs) {
+      // Download Tech Spec
+      downloadTechSpec(techSpec);
+
+      // Download each ADR
+      adrs.forEach(adr => {
+        setTimeout(() => downloadADR(adr), 100);
+      });
+
+      showStatus('Downloading ' + (adrs.length + 1) + ' documents...', 'success');
+    }
+
     function downloadPRD(prdMarkdown) {
       const blob = new Blob([prdMarkdown], { type: 'text/markdown' });
       const url = URL.createObjectURL(blob);
@@ -2833,14 +3282,29 @@ app.get('/planning', (c) => {
     }
 
     async function completePhase() {
+      const currentPhase = currentSession?.currentPhase || 'requirements';
+
       try {
-        const response = await fetch('/api/planning/phase/requirements/complete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        let endpoint;
+        let body = {};
+
+        if (currentPhase === 'requirements') {
+          endpoint = '/api/planning/phase/requirements/complete';
+          body = {
             phaseId: 'requirements',
             output: requirementsFormData
-          })
+          };
+        } else if (currentPhase === 'design') {
+          endpoint = '/api/planning/design/complete';
+        } else {
+          showStatus('Unknown phase: ' + currentPhase, 'error');
+          return;
+        }
+
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
         });
 
         const result = await response.json();
@@ -3229,6 +3693,223 @@ app.post('/api/planning/requirements/generate-prd', async (c) => {
       }, 500)
     }
 
+    return c.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, 500)
+  }
+})
+
+/**
+ * Generate Tech Spec from design form data
+ */
+app.post('/api/planning/design/generate-techspec', async (c) => {
+  try {
+    const session = Array.from(planningSessions.values())[0]
+
+    if (!session) {
+      return c.json({
+        success: false,
+        error: 'No planning session found'
+      }, 404)
+    }
+
+    if (session.currentPhase !== 'design') {
+      return c.json({
+        success: false,
+        error: 'Not in design phase'
+      }, 400)
+    }
+
+    if (!session.phaseData.design) {
+      return c.json({
+        success: false,
+        error: 'Design form not completed'
+      }, 400)
+    }
+
+    const designData = session.phaseData.design
+    const prdContext = session.phaseData.requirements?.generatedPRD
+
+    const techSpec = await generateTechSpec(designData, prdContext)
+
+    session.phaseData.design.generatedTechSpec = techSpec
+    session.phaseData.design.techSpecGeneratedAt = new Date()
+    session.updatedAt = new Date()
+
+    planningSessions.set(session.id, session)
+
+    return c.json({
+      success: true,
+      data: {
+        techSpec,
+        generatedAt: session.phaseData.design.techSpecGeneratedAt
+      }
+    })
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('ANTHROPIC_API_KEY')) {
+      return c.json({
+        success: false,
+        error: 'Claude API key not configured'
+      }, 500)
+    }
+
+    return c.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, 500)
+  }
+})
+
+/**
+ * Generate individual ADR from architectural decision
+ */
+app.post('/api/planning/design/generate-adr', async (c) => {
+  try {
+    const GenerateADRRequestSchema = z.object({
+      decisionIndex: z.number().min(0)
+    })
+
+    const body = await c.req.json()
+    const validated = GenerateADRRequestSchema.parse(body)
+
+    const session = Array.from(planningSessions.values())[0]
+
+    if (!session) {
+      return c.json({
+        success: false,
+        error: 'No planning session found'
+      }, 404)
+    }
+
+    if (session.currentPhase !== 'design') {
+      return c.json({
+        success: false,
+        error: 'Not in design phase'
+      }, 400)
+    }
+
+    if (!session.phaseData.design) {
+      return c.json({
+        success: false,
+        error: 'Design data missing'
+      }, 400)
+    }
+
+    const designData = session.phaseData.design
+    const decision = designData.architecturalDecisions[validated.decisionIndex]
+
+    if (!decision) {
+      return c.json({
+        success: false,
+        error: 'Decision index out of bounds'
+      }, 400)
+    }
+
+    // Initialize generatedADRs if undefined
+    if (!designData.generatedADRs) {
+      designData.generatedADRs = []
+    }
+
+    // Generate ADR ID
+    const adrId = `ADR-${(designData.generatedADRs.length + 1).toString().padStart(3, '0')}`
+
+    // Build project context
+    const projectContext = `Project: ${designData.systemArchitecture} architecture
+Architecture: ${designData.architectureDescription}
+Tech Spec: ${designData.generatedTechSpec ? 'Available' : 'Not yet generated'}`
+
+    const adrContent = await generateADR(decision, adrId, projectContext)
+
+    const generatedADR: GeneratedADR = {
+      id: adrId,
+      title: decision.title,
+      content: adrContent,
+      generatedAt: new Date()
+    }
+
+    designData.generatedADRs.push(generatedADR)
+    session.updatedAt = new Date()
+
+    planningSessions.set(session.id, session)
+
+    return c.json({
+      success: true,
+      data: {
+        adr: generatedADR
+      }
+    })
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return c.json({
+        success: false,
+        error: 'Invalid request',
+        details: error.errors
+      }, 400)
+    }
+
+    if (error instanceof Error && error.message.includes('ANTHROPIC_API_KEY')) {
+      return c.json({
+        success: false,
+        error: 'Claude API key not configured'
+      }, 500)
+    }
+
+    return c.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, 500)
+  }
+})
+
+/**
+ * Complete design phase
+ */
+app.post('/api/planning/design/complete', async (c) => {
+  try {
+    const session = Array.from(planningSessions.values())[0]
+
+    if (!session) {
+      return c.json({
+        success: false,
+        error: 'No planning session found'
+      }, 404)
+    }
+
+    if (session.currentPhase !== 'design') {
+      return c.json({
+        success: false,
+        error: 'Not in design phase'
+      }, 400)
+    }
+
+    if (!session.phaseData.design?.generatedTechSpec) {
+      return c.json({
+        success: false,
+        error: 'Tech Spec not generated'
+      }, 400)
+    }
+
+    if (!session.phaseData.design?.generatedADRs || session.phaseData.design.generatedADRs.length === 0) {
+      return c.json({
+        success: false,
+        error: 'At least one ADR must be generated'
+      }, 400)
+    }
+
+    session.currentPhase = 'implementation'
+    session.completedPhases.push('design')
+    session.updatedAt = new Date()
+
+    planningSessions.set(session.id, session)
+
+    return c.json({
+      success: true,
+      data: {
+        currentPhase: 'implementation'
+      }
+    })
+  } catch (error) {
     return c.json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
