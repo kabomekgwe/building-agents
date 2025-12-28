@@ -61,10 +61,10 @@ Plans:
 **Goal**: Generate markdown files with frontmatter compatible with Claude Code CLI workflows
 **Depends on**: Phase 3
 **Research**: Unlikely (standard file I/O and markdown templating)
-**Plans**: TBD
+**Plans**: 1
 
 Plans:
-- [ ] TBD during phase planning
+- [ ] 04-01-PLAN.md: File export with YAML frontmatter (4 tasks, 1 checkpoint)
 
 ### Phase 5: Integration & Polish
 **Goal**: Connect UI to existing SDLC orchestrator, add progress tracking and visual polish
@@ -82,5 +82,5 @@ Plans:
 | 1. UI Foundation | 1/1 | ✓ Complete | 2025-12-28 |
 | 2. Requirements Phase UI | 2/2 | ✓ Complete | 2025-12-28 |
 | 3. Design Phase UI | 2/2 | ✓ Complete | 2025-12-28 |
-| 4. File Generation & Export | 0/TBD | Not started | - |
+| 4. File Generation & Export | 0/1 | Planning complete | - |
 | 5. Integration & Polish | 0/TBD | Not started | - |

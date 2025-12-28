@@ -23,9 +23,9 @@
 ## Current Position
 
 Phase: 4 of 5 (File Generation & Export)
-Plan: TBD (planning not yet started)
-Status: Ready to plan
-Last activity: 2025-12-28 - Completed 03-02-PLAN.md (Claude API Tech Spec & ADR generation)
+Plan: 04-01-PLAN.md (File export with YAML frontmatter)
+Status: Ready to execute
+Last activity: 2025-12-28 - Created 04-01-PLAN.md (4 tasks: frontmatter generation, export API, frontend UI, verification checkpoint)
 
 Progress: ██████░░░░ 60%
 
