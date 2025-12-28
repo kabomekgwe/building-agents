@@ -70,10 +70,10 @@ Plans:
 **Goal**: Connect UI to existing SDLC orchestrator, add progress tracking and visual polish
 **Depends on**: Phase 4
 **Research**: Unlikely (internal integration with existing codebase patterns)
-**Plans**: TBD
+**Plans**: 1
 
 Plans:
-- [ ] TBD during phase planning
+- [ ] 05-01-PLAN.md: Enhanced UX, session persistence, optional orchestrator integration (6 tasks)
 
 ## Progress
 
@@ -83,4 +83,4 @@ Plans:
 | 2. Requirements Phase UI | 2/2 | ✓ Complete | 2025-12-28 |
 | 3. Design Phase UI | 2/2 | ✓ Complete | 2025-12-28 |
 | 4. File Generation & Export | 1/1 | ✓ Complete | 2025-12-28 |
-| 5. Integration & Polish | 0/TBD | Not started | - |
+| 5. Integration & Polish | 0/1 | Planning complete | - |
